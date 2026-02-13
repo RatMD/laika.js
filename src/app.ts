@@ -261,7 +261,7 @@ export const plugin: LaikaVuePlugin = {
 
         const only = parseOnlyHeader(response.headers.get("X-Laika-Only"));
         const data = (await response.json()) as LaikaPayload;
-        this.swap(data, false, only);
+        await this.swap(data, false, only);
     },
 
     /**
@@ -326,12 +326,9 @@ export const plugin: LaikaVuePlugin = {
 
             // Dot-path patch: set only what was requested, if it exists in next
             const val = getByPath(next as any, path);
-            console.log(JSON.stringify(current));
-            console.log(JSON.stringify(next));
             if (val !== undefined) {
                 out = setByPath(out as any, path, val);
             }
-            console.log(JSON.stringify(out));
         }
 
         return out as LaikaPayload;
