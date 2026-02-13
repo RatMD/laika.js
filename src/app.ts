@@ -1,7 +1,7 @@
 import type {
     LaikaAppComponent,
-    LaikaComposable,
     LaikaPayload,
+    LaikaPayloadRefs,
     LaikaRouter,
     LaikaRuntime,
     LaikaVuePlugin,
@@ -34,13 +34,17 @@ const component = shallowRef<DefineComponent>();
 const payload = shallowRef<LaikaPayload>();
 const layout = shallowRef<any>(null);
 const key = ref<number | undefined>(undefined);
+
+// Runtime
 const runtime: LaikaRuntime = {
-    payload: () => void 0,
-    page: () => void 0,
+    get component() { return component.value; },
+    get payload() { return payload.value; },
+    get layout() { return layout.value; },
+    get key() { return key.value; },
     title: (title: string) => title,
-    resolver: () => void 0,
+    resolver: () => { throw new Error('not implemented') },
     getLayout: () => layout.value,
-    setLayout: (next: any) => { layout.value = next; }
+    setLayout: (next: any) => { layout.value = next; },
 };
 
 // Extensions
@@ -86,7 +90,7 @@ export const App: LaikaAppComponent = defineComponent({
         payload.value = initialPayload;
         key.value = void 0;
 
-        // Set Component
+        // Set
         component.value = initialComponent ? markRaw(unwrapModule<ResolvedComponent>(initialComponent)) : void 0;
         if (!component.value) {
             Promise
@@ -94,14 +98,8 @@ export const App: LaikaAppComponent = defineComponent({
                 .then(mod => { component.value = markRaw(unwrapModule<ResolvedComponent>(mod)) })
                 .catch(console.error);
         }
-
-        // Initialize Laika Runtime
-        runtime.payload = () => payload.value;
-        runtime.page = () => payload.value?.page;
         runtime.title = titleCallback ?? runtime.title;
         runtime.resolver = resolveComponent;
-        runtime.getLayout = () => layout.value;
-        runtime.setLayout = (next: any) => { layout.value = next; };
 
         // Popstate
         window.addEventListener("popstate", () => window.location.reload());
@@ -187,7 +185,7 @@ export const plugin: LaikaVuePlugin = {
             get: () => runtime
         });
         Object.defineProperty(app.config.globalProperties, '$payload', {
-            get: () => payload.value
+            get: () => runtime.payload
         });
         Object.defineProperty(app.config.globalProperties, '$router', {
             get: () => router
@@ -301,17 +299,22 @@ export const plugin: LaikaVuePlugin = {
  * Provide Composable Support
  * @returns 
  */
-export function useLaika<PageProps extends Props = Props, SharedProps extends Props = Props>(): LaikaComposable<PageProps, SharedProps> {
-    return reactive({
-        component: computed(() => component.value),
-        layout: computed(() => layout.value),
-        key: computed(() => key.value),
-        payload: computed(() => payload.value),
+export function useLaika<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props>(): LaikaRuntime<PageProps, SharedProps, ThemeOptions> {
+    return runtime;
+}
+
+/**
+ * Provide Composable Support
+ * @returns 
+ */
+export function usePayload<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props>(): LaikaPayloadRefs<PageProps, SharedProps, ThemeOptions> {
+    return {
         version: computed(() => payload.value?.version),
-        page: computed(() => payload.value?.page),
-        shared: computed(() => payload.value?.shared),
+        token: computed(() => payload.value?.token),
         theme: computed(() => payload.value?.theme),
+        page: computed(() => payload.value?.page),
         components: computed(() => payload.value?.components),
-        runtime: computed(() => runtime),
-    }) as LaikaComposable<PageProps, SharedProps>;
+        october: computed(() => payload.value?.october),
+        shared: computed(() => payload.value?.shared),
+    } as LaikaPayloadRefs<PageProps, SharedProps, ThemeOptions>;
 }

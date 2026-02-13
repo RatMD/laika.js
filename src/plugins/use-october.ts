@@ -76,7 +76,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
      */
     function boot(): OctoberPayload {
         const runtime: LaikaRuntime<Props, Props, Props> = requireRuntime();
-        const october = runtime.payload()?.october;
+        const october = runtime.payload?.october;
         if (!october) {
             throw new Error("October Functions: missing october payload.");
         }
