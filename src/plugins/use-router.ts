@@ -28,7 +28,7 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
      * @returns 
      */
     function prepare(url: string, options: any = {}): Request {
-        const runtime: any = requireRuntime();
+        const runtime = requireRuntime();
         const method = (options.method ?? "get").toLowerCase();
         const data = options.data ?? undefined;
 
@@ -40,11 +40,11 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
             ...(options.headers ?? {}),
         });
 
-        const token = runtime.payload?.()?.token
+        const token = runtime.payload?.token;
         if (token) {
             const [csrfToken, laikaToken] = token.split('|');
-            headers.set("X-CSRF-TOKEN", csrfToken);
-            headers.set("X-Laika-Token", laikaToken);
+            headers.set("X-CSRF-TOKEN", csrfToken as string);
+            headers.set("X-Laika-Token", laikaToken as string);
         }
         if (options.force) {
             headers.set("X-Laika-Force", "1");
