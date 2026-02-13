@@ -85,7 +85,7 @@ export function useComponent(alias: string): OctoberComponentHandle {
         }
 
         const only = missing.map(key => `components.${alias}.props.${key}`);
-        await router.raw(window.location.pathname + window.location.search, {
+        await router.get(window.location.pathname + window.location.search, {
             only,
             preserveState: true,
             replace: true,
