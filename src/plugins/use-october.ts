@@ -241,7 +241,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
      * @returns 
      */
     async function callFilter(filter: string, payload: any) {
-        const response = await router.raw('/oc:laika/filter', {
+        const response = await router.raw('/x-laika/filter', {
             method: 'post',
             data: {
                 filter, 
