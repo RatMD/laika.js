@@ -32,8 +32,8 @@ export interface OctoberPayload {
 
 export interface OctoberAPI {
     app(path: string): string;
-    theme(path: string | string[]): string | string[];
-    page(name?: string | null, params?: Record<string, any> | boolean, persistence?: boolean): string | null;
+    theme<T = string | string[]>(path: T): T;
+    page(name?: string | null, params?: Record<string, any> | boolean, persistence?: boolean): string | undefined;
     media(file: string): string;
     resize(input: string, width?: number | null, height?: number | null, options?: Record<string, any>): string;
     currency(value: string | number, options?: CurrencyOptions): string;

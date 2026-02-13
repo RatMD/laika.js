@@ -1,5 +1,5 @@
 import { defineComponent, h, type DefineComponent } from "vue";
-import { useLaika } from "../app";
+import { usePayload } from "../app";
 
 export const PageContent: DefineComponent = defineComponent({
     /**
@@ -13,9 +13,9 @@ export const PageContent: DefineComponent = defineComponent({
      * @returns
      */
     setup(props) {
-        const laika = useLaika();
+        const payload = usePayload();
         return () => {
-            const innerHTML = laika.page?.content ?? "";
+            const innerHTML = payload.page.value.content ?? "";
             return h('div', { innerHTML });
         };
     }

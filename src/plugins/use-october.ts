@@ -97,11 +97,11 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
      * @param path 
      * @returns 
      */
-    function theme(path: string | string[]): string | string[] {
+    function theme<T = string | string[]>(path: T): T {
         if (Array.isArray(path)) {
-            return path.map(p => joinUrl(boot().themeBaseUrl, p ?? ""));
+            return path.map(p => joinUrl(boot().themeBaseUrl, p ?? "")) as T;
         } else {
-            return joinUrl(boot().themeBaseUrl, path);
+            return joinUrl(boot().themeBaseUrl, path as string) as T;
         }
     }
 
@@ -133,12 +133,12 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         }
 
         if (typeof name !== "string")  {
-            return null;
+            return void 0;
         }
 
         const pageInfo = pages[name];
         if (!pageInfo?.pattern)  {
-            return null;
+            return void 0;
         }
 
         const merged = persistence ? { ...currentParams, ...params } : params;

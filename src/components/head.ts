@@ -1,4 +1,3 @@
-import { useLaika } from "../app";
 import {
     type DefineComponent,
     type SlotsType,
@@ -9,6 +8,7 @@ import {
     ref,
     watch,
 } from "vue";
+import { usePayload } from "../app";
 
 export interface HeadProps {
     /**
@@ -59,10 +59,10 @@ export const Head: DefineComponent<
      * @returns
      */
     setup(props, { slots }) {
-        const laika = useLaika();
+        const payload = usePayload();
         const revision = ref<number>(0);
         const getUniqueKey = () => {
-            return props.watchKey ?? laika?.page?.id ?? laika?.page?.url ?? null;
+            return props.watchKey ?? payload.page.value.id ?? payload.page.value.url ?? null;
         };
         
         // Watch key to observer changes

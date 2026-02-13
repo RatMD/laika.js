@@ -1,5 +1,5 @@
 import type { OctoberComponent } from "../types";
-import { useLaika } from "../app";
+import { usePayload } from "../app";
 import { defineComponent, h, PropType, SlotsType, VNodeChild, type DefineComponent } from "vue";
 
 export interface PageComponentProps {
@@ -50,15 +50,15 @@ export const PageComponent: DefineComponent<
      * @returns
      */
     setup(props, { slots }) {
-        const laika = useLaika();
+        const payload = usePayload();
 
         // Render
         return () => {
-            if (!(laika.components && props.name in laika.components)) {
+            if (!(payload.components.value && props.name in payload.components.value)) {
                 return null;
             }
 
-            const componentData = laika.components[props.name] as OctoberComponent || undefined;
+            const componentData = payload.components.value[props.name] as OctoberComponent || undefined;
             if (!componentData) {
                 return null;
             }
