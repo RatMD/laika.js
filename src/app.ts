@@ -261,7 +261,9 @@ export const plugin: LaikaVuePlugin = {
 
         const only = parseOnlyHeader(response.headers.get("X-Laika-Only"));
         const data = (await response.json()) as LaikaPayload;
+        console.log('swapo:start');
         await this.swap(data, false, only);
+        console.log('swapo:end');
     },
 
     /**

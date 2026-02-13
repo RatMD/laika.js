@@ -107,7 +107,9 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
             }
 
             // Hook
+            console.log('success:start');
             await hooks.onSuccess(request, response);
+            console.log('success:end');
         } catch (err) {
             await hooks.onFailure(err, request, response);
             throw err;

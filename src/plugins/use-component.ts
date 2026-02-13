@@ -85,12 +85,14 @@ export function useComponent(alias: string): OctoberComponentHandle {
         }
 
         const only = missing.map(key => `components.${alias}.props.${key}`);
+        console.log('load:start');
         await router.get(window.location.pathname + window.location.search, {
             only,
             preserveState: true,
             replace: true,
         });
         await nextTick();
+        console.log('load:end');
 
         if (Array.isArray(keys)) {
             return current.value?.props;
