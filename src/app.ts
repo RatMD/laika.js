@@ -309,7 +309,7 @@ export const plugin: LaikaVuePlugin = {
      * @returns 
      */
     patch(current: LaikaPayload, next: LaikaPayload, only: string[]): LaikaPayload {
-        const out: any = { ...(current as any) };
+        let out: any = { ...(current as any) };
 
         for (const path of only) {
             if (!path) {
@@ -326,9 +326,12 @@ export const plugin: LaikaVuePlugin = {
 
             // Dot-path patch: set only what was requested, if it exists in next
             const val = getByPath(next as any, path);
+            console.log(JSON.stringify(current));
+            console.log(JSON.stringify(next));
             if (val !== undefined) {
-                setByPath(out as any, path, val);
+                out = setByPath(out as any, path, val);
             }
+            console.log(JSON.stringify(out));
         }
 
         return out as LaikaPayload;
