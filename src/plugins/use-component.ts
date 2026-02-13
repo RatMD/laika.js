@@ -1,5 +1,5 @@
 import type { OctoberComponentHandle } from "../types";
-import { computed } from "vue";
+import { computed, nextTick } from "vue";
 import { usePayload } from "../app";
 import { useRouter } from "./use-router";
 
@@ -90,6 +90,7 @@ export function useComponent(alias: string): OctoberComponentHandle {
             preserveState: true,
             replace: true,
         });
+        await nextTick();
 
         if (Array.isArray(keys)) {
             return current.value?.props;

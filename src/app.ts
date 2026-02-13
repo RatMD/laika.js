@@ -310,23 +310,24 @@ export const plugin: LaikaVuePlugin = {
      */
     patch(current: LaikaPayload, next: LaikaPayload, only: string[]): LaikaPayload {
         const out: any = { ...(current as any) };
-        const top = new Set(only.filter(k => !k.startsWith('shared.')));
 
-        for (const key of top) {
-            if (key in (next as any)) {
-                out[key] = (next as any)[key];
+        for (const path of only) {
+            if (!path) {
+                continue;
             }
-        }
 
-        const sharedPaths = only.filter(k => k.startsWith('shared.'));
-        if (sharedPaths.length) {
-            out.shared = { ...(out.shared ?? {}) };
-
-            for (const path of sharedPaths) {
-                const val = getByPath(next as any, path);
-                if (val !== undefined) {
-                    setByPath(out as any, path, val);
+            // If the server returned a top-level replacement, accept it
+            if (!path.includes('.')) {
+                if (path in (next as any)) {
+                    out[path] = (next as any)[path];
                 }
+                continue;
+            }
+
+            // Dot-path patch: set only what was requested, if it exists in next
+            const val = getByPath(next as any, path);
+            if (val !== undefined) {
+                setByPath(out as any, path, val);
             }
         }
 
