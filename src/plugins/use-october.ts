@@ -136,6 +136,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
             return void 0;
         }
 
+        name = name.toLowerCase();
         const pageInfo = pages[name];
         if (!pageInfo?.pattern)  {
             return void 0;
