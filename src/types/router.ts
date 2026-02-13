@@ -11,12 +11,13 @@ export type LaikaVisitOptions = {
 };
 
 export type LaikaRouter = {
-    visit(url: string, options?: LaikaVisitOptions, returnResponse?: boolean): Promise<Response>;
-    get(url: string, options?: Omit<LaikaVisitOptions, "method">, returnResponse?: boolean): Promise<Response>;
-    post(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">, returnResponse?: boolean): Promise<Response>;
-    put(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">, returnResponse?: boolean): Promise<Response>;
-    patch(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">, returnResponse?: boolean): Promise<Response>;
-    delete(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">, returnResponse?: boolean): Promise<Response>;
+    raw(url: string, options?: LaikaVisitOptions): Promise<Response>;
+    visit(url: string, options?: LaikaVisitOptions): Promise<void>;
+    get(url: string, options?: Omit<LaikaVisitOptions, "method">): Promise<void>;
+    post(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">): Promise<void>;
+    put(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">): Promise<void>;
+    patch(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">): Promise<void>;
+    delete(url: string, data?: Record<string, any>, options?: Omit<LaikaVisitOptions, "method" | "data">): Promise<void>;
 };
 
 export interface LaikaRouterHooks {

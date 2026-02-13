@@ -161,11 +161,7 @@ export const plugin: LaikaVuePlugin = {
         // Composable
         const progress = getProgressBar();
 
-        // install october functions
-        october = createOctober(getRuntime);
-        provideOctober(october, app);
-
-        // install router
+        // install router plugin
         router = createRouter(getRuntime, {
             onBefore:  (request) => { 
                 progress.start();
@@ -181,6 +177,10 @@ export const plugin: LaikaVuePlugin = {
             }
         });
         provideRouter(router, app);
+
+        // install october plugin
+        october = createOctober(getRuntime, router as LaikaRouter);
+        provideOctober(october, app);
 
         // Attach global properties
         Object.defineProperty(app.config.globalProperties, '$laika', {

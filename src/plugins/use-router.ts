@@ -8,7 +8,7 @@ import { LAIKA_ROUTER_KEY } from "../symbols";
  * @param hoks 
  * @returns 
  */
-export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: LaikaRouterHooks) {
+export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: LaikaRouterHooks): LaikaRouter {
     /**
      * 
      * @returns 
@@ -22,11 +22,12 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
     }
 
     /**
-     * 
+     * Prepare fetch Request
      * @param url 
      * @param options 
+     * @returns 
      */
-    async function visit(url: string, options: any = {}, returnResponse: boolean = false): Promise<Response> {
+    function prepare(url: string, options: any = {}): Request {
         const runtime: any = requireRuntime();
         const method = (options.method ?? "get").toLowerCase();
         const data = options.data ?? undefined;
@@ -56,30 +57,46 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
             headers.set('Content-Type', 'application/json');
         }
 
-        // Handle Request
-        const request: Request = new Request(url, {
+        return new Request(url, {
             method: method.toUpperCase(),
             headers,
             body: method !== 'get' ? JSON.stringify(data ?? {}) : null,
             credentials: "same-origin",
-        });
+        });;
+    }
+
+    /**
+     * 
+     * @param url 
+     * @param options 
+     */
+    async function raw(url: string, options: any = {}): Promise<Response> {
+        const request: Request = prepare(url, options);
+        try {
+            return await fetch(request);
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    /**
+     * 
+     * @param url 
+     * @param options 
+     */
+    async function visit(url: string, options: any = {}): Promise<void> {
+        const request: Request = prepare(url, options);
 
         // Handle Request
-        const shouldHistory = method === "get";
         let response;
         try {
-            if (!returnResponse) {
-                hooks.onBefore(request);
-            }
+            await hooks.onBefore(request);
 
             // Execute Request
             response = await fetch(request);
-            if (returnResponse) {
-                return response;
-            }
 
             // Handle History
-            if (!returnResponse && shouldHistory) {
+            if (request.method === 'get') {
                 if (options.replace) {
                     history.replaceState({}, "", url);
                 } else {
@@ -88,26 +105,22 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
             }
 
             // Hook
-            if (!returnResponse) {
-                hooks.onSuccess(request, response);
-            }
+            await hooks.onSuccess(request, response);
         } catch (err) {
-            if (!returnResponse) {
-                hooks.onFailure(err, request, response);
-            }
+            await hooks.onFailure(err, request, response);
             throw err;
         }
-        return response;
     }
 
     // Export
     return {
+        raw,
         visit,
-        get: (url: string, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "get" }, returnResponse),
-        post: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "post", data }, returnResponse),
-        put: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "put", data }, returnResponse),
-        patch: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "patch", data }, returnResponse),
-        delete: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "delete", data }, returnResponse),
+        get: (url: string, options?: any) => visit(url, { ...(options ?? {}), method: "get" }),
+        post: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "post", data }),
+        put: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "put", data }),
+        patch: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "patch", data }),
+        delete: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "delete", data }),
     };
 }
 

@@ -1,7 +1,6 @@
-import type { CurrencyOptions, LaikaRuntime, OctoberAPI, OctoberPayload, Props } from "../types";
+import type { CurrencyOptions, LaikaRouter, LaikaRuntime, OctoberAPI, OctoberPayload, Props } from "../types";
 import { inject } from "vue";
 import { LAIKA_OCTOBER_KEY } from "../symbols";
-import { useRouter } from "./use-router";
 
 /**
  * 
@@ -55,9 +54,10 @@ function fillPattern(pattern: string, params: Record<string, any>) {
 /**
  * October Composable Creator
  * @param getRuntime 
+ * @param router 
  * @returns 
  */
-export function createOctober(getRuntime: () => LaikaRuntime | undefined): OctoberAPI {
+export function createOctober(getRuntime: () => LaikaRuntime | undefined, router: LaikaRouter): OctoberAPI {
     /**
      * 
      * @returns 
@@ -241,12 +241,13 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined): Octob
      * @returns 
      */
     async function callFilter(filter: string, payload: any) {
-        const router = useRouter();
-
-        const response = await router.post('/oc:laika/filter', {
-            filter, 
-            payload
-        }, {}, true);
+        const response = await router.raw('/oc:laika/filter', {
+            method: 'post',
+            data: {
+                filter, 
+                payload
+            }
+        });
         if (!response.ok) {
             throw new Error(`October filter failed: ${filter}. (${response.status})`);
         }
