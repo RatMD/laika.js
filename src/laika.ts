@@ -10,14 +10,14 @@ import { App, plugin } from "./app";
  * @param selector
  * @returns
  */
-function readInitialPayload<PageProps extends Props, SharedProps extends Props>(
+function readInitialPayload<PageProps extends Props, SharedProps extends Props, ThemeOptions extends Props>(
     selector = '[data-laika="payload"]',
-): LaikaPayload<PageProps, SharedProps> {
+): LaikaPayload<PageProps, SharedProps, ThemeOptions> {
     const element = document.head.querySelector(selector);
     if (!element?.textContent?.trim()) {
         throw new Error("Laika: payload missing/empty");
     }
-    return JSON.parse(element.textContent) as LaikaPayload<PageProps, SharedProps>;
+    return JSON.parse(element.textContent) as LaikaPayload<PageProps, SharedProps, ThemeOptions>;
 }
 
 /**
@@ -25,20 +25,20 @@ function readInitialPayload<PageProps extends Props, SharedProps extends Props>(
  * @param options
  * @returns
  */
-export async function createLaikaApp<PageProps extends Props = Props, SharedProps extends Props = Props>(
-    options: LaikaOptions<PageProps, SharedProps>
+export async function createLaikaApp<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props>(
+    options: LaikaOptions<PageProps, SharedProps, ThemeOptions>
 ) {
     const root = (options.rootId ? document.querySelector(options.rootId) : document.querySelector(".app")) as HTMLElement | null;
     if (!root) {
         throw new Error(`Laika: root element not found (${options.rootId ?? ".app"})`);
     }
 
-    const payload = readInitialPayload<PageProps, SharedProps>();
+    const payload = readInitialPayload<PageProps, SharedProps, ThemeOptions>();
     const resolved = await Promise.resolve(options.resolve(payload.page.component));
     const initialComponent = unwrapModule<DefineComponent>(resolved);
 
     // Create App Properties
-    const props: LaikaAppComponentProps<PageProps, SharedProps> = {
+    const props: LaikaAppComponentProps<PageProps, SharedProps, ThemeOptions> = {
         initialPayload: payload,
         initialComponent,
         resolveComponent: options.resolve,
