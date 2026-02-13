@@ -187,6 +187,9 @@ export const plugin: LaikaVuePlugin = {
         Object.defineProperty(app.config.globalProperties, '$payload', {
             get: () => runtime.payload
         });
+        Object.defineProperty(app.config.globalProperties, '$components', {
+            get: () => runtime.payload?.components
+        });
         Object.defineProperty(app.config.globalProperties, '$router', {
             get: () => router
         });

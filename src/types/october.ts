@@ -7,16 +7,18 @@ export interface CurrencyOptions {
     site?: boolean;
 }
 
-export interface OctoberComponent {
+export interface OctoberComponent<ComponentProps extends Props = Props, ComponentOptions extends Props = Props> {
     component: string;
     alias: string;
     class: string;
-    options: Props;
-    props: Props;
+    options: ComponentProps;
+    props: ComponentOptions;
+    methods: string[];
+    vars: string[];
 }
 
 export interface OctoberComponents {
-    [alias: string]: OctoberComponent;
+    [alias: string]: OctoberComponent<Props, Props>;
 }
 
 export interface OctoberPayload {
