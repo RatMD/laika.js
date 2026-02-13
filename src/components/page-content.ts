@@ -1,10 +1,12 @@
 import { defineComponent, h, type DefineComponent } from "vue";
 import { useLaika } from "../app";
 
-/**
- * Render Page Content
- */
 export const PageContent: DefineComponent = defineComponent({
+    /**
+     * Internal Name
+     */
+    name: "LaikaPageContent",
+
     /**
      *
      * @param props

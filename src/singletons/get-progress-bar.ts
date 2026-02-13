@@ -8,7 +8,11 @@ const progress = reactive({
 });
 let progressTimer: number | null = null;
 
-export function useProgressBar() {
+/**
+ * Progressbar Singleton
+ * @returns 
+ */
+export function getProgressBar() {
     /**
      * Start ProgressBar
      */
@@ -61,7 +65,7 @@ export function useProgressBar() {
         done(true);
     }
 
-    // Export Composable
+    // Export Singleton
     return {
         state: progress,
         start,

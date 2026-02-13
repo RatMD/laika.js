@@ -2,7 +2,9 @@ import type {
     LaikaAppComponent,
     LaikaComposable,
     LaikaPayload,
+    LaikaRouter,
     LaikaRuntime,
+    LaikaVuePlugin,
     OctoberAPI,
     Props,
     ResolvedComponent,
@@ -10,7 +12,6 @@ import type {
 } from "./types";
 import {
     type DefineComponent,
-    type Plugin,
     type PropType,
     type VNode,
     computed,
@@ -23,10 +24,10 @@ import {
     Fragment,
 } from "vue";
 import { ProgressBar } from "./components/progress-bar";
-import { createOctoberAPI } from "./october";
-import { useProgressBar } from "./progress";
+import { createOctober, provideOctober } from "./composables/use-october";
+import { getProgressBar } from "./singletons/get-progress-bar";
 import { getByPath, parseOnlyHeader, setByPath, unwrapModule } from "./utils";
-
+import { createRouter, provideRouter } from "./composables/use-router";
 
 // States
 const component = shallowRef<DefineComponent>();
@@ -34,16 +35,19 @@ const payload = shallowRef<LaikaPayload>();
 const layout = shallowRef<any>(null);
 const key = ref<number | undefined>(undefined);
 const runtime: LaikaRuntime = {
-    payload: () => undefined,
-    page: () => undefined,
-    visit: async () => { throw new Error("Laika runtime not ready"); },
-    request: async () => { throw new Error("Laika runtime not ready"); },
+    payload: () => void 0,
+    page: () => void 0,
+    title: (title: string) => title,
+    resolver: () => void 0,
+    getLayout: () => layout.value,
+    setLayout: (next: any) => { layout.value = next; }
 };
+
+// Extensions
+let router: LaikaRouter | undefined;
 let october: OctoberAPI | undefined;
 
-/**
- * Laika Application Component
- */
+
 export const App: LaikaAppComponent = defineComponent({
     /**
      * Component Name
@@ -82,9 +86,6 @@ export const App: LaikaAppComponent = defineComponent({
         payload.value = initialPayload;
         key.value = void 0;
 
-        // Composable
-        const progress = useProgressBar();
-
         // Set Component
         component.value = initialComponent ? markRaw(unwrapModule<ResolvedComponent>(initialComponent)) : void 0;
         if (!component.value) {
@@ -94,120 +95,13 @@ export const App: LaikaAppComponent = defineComponent({
                 .catch(console.error);
         }
 
-        /**
-         * Fetch Payload
-         * @param url
-         * @returns
-         */
-        async function fetchPayload(url: string) {
-            const res = await fetch(url, {
-                headers: {
-                    Accept: "application/json",
-                    "X-Laika": "1",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                credentials: "same-origin",
-            });
-
-            if (res.status === 409) {
-                const loc = res.headers.get("X-Laika-Location");
-                if (loc) {
-                    window.location.assign(loc);
-                }
-                throw new Error("Laika redirect");
-            }
-
-            if (!res.ok) {
-                window.location.assign(url);
-                throw new Error("Navigation fallback");
-            }
-
-            const only = parseOnlyHeader(res.headers.get("X-Laika-Only"));
-            const data = (await res.json()) as LaikaPayload;
-
-            return { data, only };
-        }
-
-        /**
-         *
-         * @param current
-         * @param next
-         * @param only
-         * @returns
-         */
-        function patchPayload(current: LaikaPayload, next: LaikaPayload, only: string[]): LaikaPayload {
-            const out: any = { ...(current as any) };
-            const top = new Set(only.filter(k => !k.startsWith('shared.')));
-
-            for (const key of top) {
-                if (key in (next as any)) {
-                    out[key] = (next as any)[key];
-                }
-            }
-
-            const sharedPaths = only.filter(k => k.startsWith('shared.'));
-            if (sharedPaths.length) {
-                out.shared = { ...(out.shared ?? {}) };
-
-                for (const path of sharedPaths) {
-                    const val = getByPath(next as any, path);
-                    if (val !== undefined) {
-                        setByPath(out as any, path, val);
-                    }
-                }
-            }
-
-            return out as LaikaPayload;
-        }
-
-        /**
-         * Swap Component
-         * @param nextPayload
-         * @param preserveState
-         */
-        async function swap(nextPayload: LaikaPayload, preserveState?: boolean, only?: string[]) {
-            const mod = await resolveComponent(nextPayload.page.component);
-            component.value = markRaw(unwrapModule<ResolvedComponent>(mod));
-
-            if (only && only.length && payload.value) {
-                payload.value = patchPayload(payload.value, nextPayload, only);
-            } else {
-                payload.value = nextPayload;
-            }
-
-            const title = payload.value?.page?.title;
-            if (title) {
-                document.title = (titleCallback ?? ((x) => x))(title);
-            }
-
-            key.value = preserveState ? key.value : Date.now();
-        }
-
-        // Laika Runtime API
+        // Initialize Laika Runtime
         runtime.payload = () => payload.value;
         runtime.page = () => payload.value?.page;
-        runtime.visit = async (url: string, opts?: { replace?: boolean, preserveState?: boolean }) => {
-            progress.start();
-
-            try {
-                if (opts?.replace) {
-                    history.replaceState({}, "", url);
-                } else {
-                    history.pushState({}, "", url);
-                }
-
-                const { data: nextPayload, only } = await fetchPayload(url);
-                await swap(nextPayload, opts?.preserveState, only);
-                progress.done();
-            } catch (err) {
-                console.error(err);
-                progress.fail();
-            }
-        };
-        runtime.request = async (handler: string, data?: Record<string, unknown>) => ({ handler, data });
-        runtime.setLayout = (next: any) => {
-            layout.value = next;
-        };
+        runtime.title = titleCallback ?? runtime.title;
+        runtime.resolver = resolveComponent;
+        runtime.getLayout = () => layout.value;
+        runtime.setLayout = (next: any) => { layout.value = next; };
 
         // Popstate
         window.addEventListener("popstate", () => window.location.reload());
@@ -253,27 +147,159 @@ export const App: LaikaAppComponent = defineComponent({
 });
 
 /**
- * Laika Plugin
+ * Laika Vue Plugin
  */
-export const plugin: Plugin = {
+export const plugin: LaikaVuePlugin = {
+    /**
+     * Install Laika Plugin
+     * @param app 
+     */
     install(app) {
+        const self = this;
+        const getRuntime = () => runtime;
+        
+        // Composable
+        const progress = getProgressBar();
+
+        // install october functions
+        october = createOctober(getRuntime);
+        provideOctober(october, app);
+
+        // install router
+        router = createRouter(getRuntime, {
+            onBefore:  (request) => { 
+                progress.start();
+                self.onRouterBefore(request);
+            },
+            onSuccess: (request, response) => { 
+                progress.done();
+                self.onRouterSuccess(request, response);
+            },
+            onFailure: (request, response) => { 
+                progress.fail();
+                self.onRouterFailure(request, response);
+            }
+        });
+        provideRouter(router, app);
+
+        // Attach global properties
         Object.defineProperty(app.config.globalProperties, '$laika', {
             get: () => runtime
         });
         Object.defineProperty(app.config.globalProperties, '$payload', {
             get: () => payload.value
         });
-
-        october = createOctoberAPI(() => runtime);
+        Object.defineProperty(app.config.globalProperties, '$router', {
+            get: () => router
+        });
         Object.defineProperty(app.config.globalProperties, '$october', {
             get: () => october
         });
     },
+
+    /**
+     * 
+     * @param request 
+     */
+    async onRouterBefore(request) {
+        // may add custom user hooks?
+    },
+
+    /**
+     * 
+     * @param request 
+     * @param response 
+     */
+    async onRouterSuccess(request, response) {
+        // may add custom user hooks?
+
+        if (response.status === 409) {
+            const loc = response.headers.get("X-Laika-Location");
+            if (loc) {
+                window.location.assign(loc);
+            }
+            throw new Error("Laika redirect");
+        }
+
+        if (!response.ok) {
+            window.location.assign(request.url);
+            throw new Error("Navigation fallback");
+        }
+
+        const only = parseOnlyHeader(response.headers.get("X-Laika-Only"));
+        const data = (await response.json()) as LaikaPayload;
+        this.swap(data, false, only);
+    },
+
+    /**
+     * 
+     * @param request 
+     * @param response 
+     */
+    async onRouterFailure(request, response) {
+        // may add custom user hooks?
+    },
+
+    /**
+     * Swap current Payload
+     * @param nextPayload 
+     * @param preserveState 
+     * @param only 
+     */
+    async swap(nextPayload: LaikaPayload, preserveState?: boolean, only?: string[]) {
+        const mod = await runtime.resolver(nextPayload.page.component);
+        component.value = markRaw(unwrapModule<ResolvedComponent>(mod));
+
+        if (only && only.length && payload.value) {
+            payload.value = this.patch(payload.value, nextPayload, only);
+        } else {
+            payload.value = nextPayload;
+        }
+
+        const title = payload.value?.page?.title;
+        if (title) {
+            document.title = (runtime.title ?? ((x) => x))(title) || 'Laika Unknown Title';
+        }
+
+        key.value = preserveState ? key.value : Date.now();
+    },
+    
+    /**
+     * Patch current Payload
+     * @param current 
+     * @param next 
+     * @param only 
+     * @returns 
+     */
+    patch(current: LaikaPayload, next: LaikaPayload, only: string[]): LaikaPayload {
+        const out: any = { ...(current as any) };
+        const top = new Set(only.filter(k => !k.startsWith('shared.')));
+
+        for (const key of top) {
+            if (key in (next as any)) {
+                out[key] = (next as any)[key];
+            }
+        }
+
+        const sharedPaths = only.filter(k => k.startsWith('shared.'));
+        if (sharedPaths.length) {
+            out.shared = { ...(out.shared ?? {}) };
+
+            for (const path of sharedPaths) {
+                const val = getByPath(next as any, path);
+                if (val !== undefined) {
+                    setByPath(out as any, path, val);
+                }
+            }
+        }
+
+        return out as LaikaPayload;
+    }
 };
 
 /**
- * Laika Composable (similar to inertias "usePage").
- * @returns
+ * Provide Composable Support
+ * @returns 
  */
 export function useLaika<PageProps extends Props = Props, SharedProps extends Props = Props>(): LaikaComposable<PageProps, SharedProps> {
     return reactive({

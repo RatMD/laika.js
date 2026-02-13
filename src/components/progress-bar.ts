@@ -1,17 +1,19 @@
 import { defineComponent, h, type DefineComponent } from "vue";
-import { useProgressBar } from "../progress";
+import { getProgressBar } from "../singletons/get-progress-bar";
 
-/**
- * Render ProgressBar
- */
 export const ProgressBar: DefineComponent = defineComponent({
+    /**
+     * Internal Name
+     */
+    name: "LaikaProgressBar",
+
     /**
      *
      * @param props
      * @returns
      */
     setup(props) {
-        const progress = useProgressBar();
+        const progress = getProgressBar();
         return () => {
             if (!progress.state.active) {
                 return;

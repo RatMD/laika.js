@@ -3,21 +3,30 @@ import { useLaika } from "../app";
 import { defineComponent, h, PropType, SlotsType, VNodeChild, type DefineComponent } from "vue";
 
 export interface PageComponentProps {
+    /**
+     * The registered component name or alias.
+     */
     name: string;
 }
 
 export interface PageComponentSlots {
+    /**
+     * 
+     * @param props 
+     */
     default(props: OctoberComponent): VNodeChild;
 }
 
-/**
- * Render Page Component
- */
 export const PageComponent: DefineComponent<
     PageComponentProps,
     {}, {}, {}, {}, {}, {}, {}, string, any, any,
     PageComponentSlots
 > = defineComponent({
+    /**
+     * Internal Name
+     */
+    name: "LaikaPageComponent",
+
     /**
      * Component Properties
      */
@@ -43,6 +52,7 @@ export const PageComponent: DefineComponent<
     setup(props, { slots }) {
         const laika = useLaika();
 
+        // Render
         return () => {
             if (!(laika.components && props.name in laika.components)) {
                 return null;

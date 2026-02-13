@@ -1,18 +1,6 @@
-import type { App, Component, DefineComponent, Plugin } from 'vue';
-
-export type ResolveResult = DefineComponent
-                          | Promise<DefineComponent>
-                          | { default: DefineComponent }
-                          | Promise<{ default: DefineComponent }>;
-
-export type ResolveCallback = (name: string) => ResolveResult;
-
-export type ResolveTitle = (title: string) => string;
-
-export type ResolvedComponent = DefineComponent & { layout?: any; inheritAttrs?: boolean };
-
-
-export type Props = Record<string, unknown>;
+import type { App, Component, DefineComponent, ObjectPlugin, Plugin } from 'vue';
+import type { Props, ResolveCallback, ResolveResult, ResolveTitle } from './base';
+import type { OctoberComponents, OctoberPayload } from './october';
 
 export interface ThemeObject<ThemeOptions extends Props = Props> {
     name: string | null;
@@ -43,23 +31,12 @@ export interface PageObject<PageProps extends Props = Props> {
     content: string | null;
 }
 
-export interface OctoberComponent {
-    component: string;
-    alias: string;
-    class: string;
-    options: Props;
-    props: Props;
-}
-
-export interface OctoberComponents {
-    [alias: string]: OctoberComponent;
-}
-
 export interface LaikaPayload<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props> {
     version: string | null;
     theme: ThemeObject<ThemeOptions>;
     page: PageObject<PageProps>;
     components: OctoberComponents;
+    october: OctoberPayload;
     shared: SharedProps;
 }
 
@@ -78,8 +55,9 @@ export type LaikaPlugin = Plugin;
 export interface LaikaRuntime<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props> {
     payload: () => LaikaPayload<PageProps, SharedProps, ThemeOptions> | undefined;
     page: () => LaikaPayload<PageProps, SharedProps, ThemeOptions>['page'] | undefined;
-    visit: (url: string, opts?: { replace?: boolean; preserveState?: boolean }) => Promise<void>;
-    request: (handler: string, data?: Record<string, unknown>) => Promise<unknown>;
+    title: ResolveTitle | (() => undefined);
+    resolver: ResolveCallback | (() => undefined);
+    getLayout?: () => string | undefined;
     setLayout?: (layout: any) => void;
 }
 
@@ -110,4 +88,12 @@ export interface LaikaComposable<PageProps extends Props = Props, SharedProps ex
     theme: ThemeObject<ThemeOptions>;
     components: OctoberComponents | undefined;
     runtime: LaikaRuntime<PageProps, SharedProps, ThemeOptions>;
+}
+
+export interface LaikaVuePlugin extends ObjectPlugin {
+    onRouterBefore(request: Request): void;
+    onRouterSuccess(request: Request, response: Response): void;
+    onRouterFailure(request: Request, response?: Response): void;
+    swap(nextPayload: LaikaPayload, preserveState?: boolean, only?: string[]): void;
+    patch(current: LaikaPayload, next: LaikaPayload, only: string[]): LaikaPayload;
 }
