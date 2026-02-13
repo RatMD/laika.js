@@ -32,26 +32,41 @@ export function getByPath(obj: any, path: string): any {
 
 /**
  *
- * @param obj
+ * @param root
  * @param path
  * @param value
  */
-export function setByPath(obj: any, path: string, value: any) {
+export function setByPath(root: any, path: string, value: any) {
     const parts = path.split('.');
-    if (parts.length === 0) {
-        return;
+    if (!parts.length) {
+        return root;
     }
 
+    const out = Array.isArray(root) ? root.slice() : { ...(root ?? {}) };
     const last = parts[parts.length - 1];
-    let cur = obj;
+
+    let curOut: any = out;
+    let curIn: any = root ?? {};
 
     for (let i = 0; i < parts.length - 1; i++) {
         const key = parts[i] as string;
-        if (cur[key] == null || typeof cur[key] !== 'object') {
-            cur[key] = {};
+
+        const nextIn = curIn?.[key];
+        let nextOut: any;
+
+        if (Array.isArray(nextIn)) {
+            nextOut = nextIn.slice();
+        } else if (nextIn && typeof nextIn === 'object') {
+            nextOut = { ...nextIn };
+        } else {
+            nextOut = {};
         }
-        cur = cur[key];
+
+        curOut[key] = nextOut;
+        curOut = nextOut;
+        curIn = nextIn;
     }
 
-    cur[last as string] = value;
+    curOut[last as string] = value;
+    return out;
 }
