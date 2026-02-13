@@ -1,7 +1,7 @@
 {
     "name": "@ratmd/laika",
     "version": "0.1.0",
-    "description": "LAIKA is an Inertia-inspired Vue/Vite adapter which lets you build your entire OctoberCMS theme in Vue while still using everything October provides.",
+    "description": "LAIKA is an Inertia-inspired Vue/Vite adapter which lets you build your entire OctoberCMS theme in Vue while still using everything October provides (This package provides the related Vue / Vite libraries).",
     "keywords": [
         "octobercms"
     ],
@@ -27,6 +27,7 @@
             "require": "./dist/laika.cjs"
         },
         "./vite": {
+            "types": "./dist/vite.d.ts",
             "import": "./dist/vite.mjs"
         }
     },
