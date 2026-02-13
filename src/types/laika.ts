@@ -85,7 +85,7 @@ export interface LaikaRuntime<PageProps extends Props = Props, SharedProps exten
 
 export interface LaikaSetup<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props> {
     root: HTMLElement;
-    App: LaikaAppComponent<PageProps, SharedProps, ThemeOptions>;
+    App: LaikaAppComponent<PageProps, SharedProps, ThemeOptions> | Component; 
     props: LaikaAppComponentProps<PageProps, SharedProps, ThemeOptions>;
     payload: LaikaPayload<PageProps, SharedProps, ThemeOptions>;
     plugin: LaikaPlugin;

@@ -9,6 +9,9 @@ lerna-debug.log*
 
 .DS_Store
 coverage
+dist/
+docs/.vitepress/cache
+docs/.vitepress/dist
 node_modules
 vendor
 *.local
@@ -19,6 +22,7 @@ vendor
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+.env
 .idea
 *.suo
 *.ntvs*

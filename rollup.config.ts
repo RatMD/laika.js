@@ -44,9 +44,7 @@ export default [
         plugins: [
             resolve({ preferBuiltins: true }),
             commonjs(),
-            typescript({
-                tsconfig: "./tsconfig.build.json",
-            }),
+            typescript({ tsconfig: "./tsconfig.build.json" }),
             terser()
         ],
         external: ["vue"],
@@ -59,9 +57,7 @@ export default [
         plugins: [
             resolve({ preferBuiltins: true }),
             commonjs(),
-            typescript({
-                tsconfig: "./tsconfig.build.json",
-            }),
+            typescript({ tsconfig: "./tsconfig.build.json" }),
             terser()
         ],
         external: ["vite", "node:fs", "node:path", "node:url", "vue"],
@@ -71,5 +67,11 @@ export default [
         output: [{ file: path.join(outDir, "laika.d.ts"), format: "es" }],
         plugins: [dts({ tsconfig: 'tsconfig.types.json' })],
         external: ["vue"],
+    },
+    {
+        input: "src/vite/index.ts",
+        output: [{ file: path.join(outDir, "vite.d.ts"), format: "es" }],
+        plugins: [dts({ tsconfig: "tsconfig.types.json" })],
+        external: ["vite", "node:fs", "node:path", "node:url", "vue"],
     }
 ];

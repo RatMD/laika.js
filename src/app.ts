@@ -256,7 +256,7 @@ export const App: LaikaAppComponent = defineComponent({
  * Laika Plugin
  */
 export const plugin: Plugin = {
-    install(app: App) {
+    install(app) {
         Object.defineProperty(app.config.globalProperties, '$laika', {
             get: () => runtime
         });
