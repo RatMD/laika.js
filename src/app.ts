@@ -280,8 +280,10 @@ export const plugin: LaikaVuePlugin = {
      * @param only 
      */
     async swap(nextPayload: LaikaPayload, preserveState?: boolean, only?: string[]) {
-        const mod = await runtime.resolver(nextPayload.page.component);
-        component.value = markRaw(unwrapModule<ResolvedComponent>(mod));
+        if ('page' in nextPayload && 'component' in nextPayload.page) {
+            const mod = await runtime.resolver(nextPayload.page.component);
+            component.value = markRaw(unwrapModule<ResolvedComponent>(mod));
+        }
 
         if (only && only.length && payload.value) {
             payload.value = this.patch(payload.value, nextPayload, only);
@@ -289,9 +291,11 @@ export const plugin: LaikaVuePlugin = {
             payload.value = nextPayload;
         }
 
-        const title = payload.value?.page?.title;
-        if (title) {
-            document.title = (runtime.title ?? ((x) => x))(title) || 'Laika Unknown Title';
+        if ('page' in nextPayload && 'title' in nextPayload.page) {
+            const title = payload.value?.page?.title;
+            if (title) {
+                document.title = (runtime.title ?? ((x) => x))(title) || 'Laika Unknown Title';
+            }
         }
 
         key.value = preserveState ? key.value : Date.now();
