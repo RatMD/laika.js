@@ -193,17 +193,17 @@ export const plugin: LaikaVuePlugin = {
 
         // install router plugin
         router = createRouter(getRuntime, {
-            onBefore:  (request) => { 
+            onBefore: async (request) => { 
                 progress.start();
-                self.onRouterBefore(request);
+                await self.onRouterBefore(request);
             },
-            onSuccess: (request, response) => { 
+            onSuccess: async (request, response) => { 
                 progress.done();
-                self.onRouterSuccess(request, response);
+                await self.onRouterSuccess(request, response);
             },
-            onFailure: (request, response) => { 
+            onFailure: async (request, response) => { 
                 progress.fail();
-                self.onRouterFailure(request, response);
+                await self.onRouterFailure(request, response);
             }
         });
         provideRouter(router, app);
