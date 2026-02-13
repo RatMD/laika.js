@@ -1,5 +1,5 @@
 import { defineComponent, h, type DefineComponent } from "vue";
-import { getProgressBar } from "../singletons/get-progress-bar";
+import { getProgressBar } from "../plugins/get-progress-bar";
 
 export const ProgressBar: DefineComponent = defineComponent({
     /**

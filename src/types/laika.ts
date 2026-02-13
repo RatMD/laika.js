@@ -33,6 +33,7 @@ export interface PageObject<PageProps extends Props = Props> {
 
 export interface LaikaPayload<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props> {
     version: string | null;
+    token: string | null;
     theme: ThemeObject<ThemeOptions>;
     page: PageObject<PageProps>;
     components: OctoberComponents;

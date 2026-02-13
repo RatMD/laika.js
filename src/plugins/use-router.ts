@@ -103,11 +103,11 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
     // Export
     return {
         visit,
-        get: (url: string, options?: any) => visit(url, { ...(options ?? {}), method: "get" }),
-        post: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "post", data }),
-        put: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "put", data }),
-        patch: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "patch", data }),
-        delete: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "delete", data }),
+        get: (url: string, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "get" }, returnResponse),
+        post: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "post", data }, returnResponse),
+        put: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "put", data }, returnResponse),
+        patch: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "patch", data }, returnResponse),
+        delete: (url: string, data?: any, options?: any, returnResponse?: boolean) => visit(url, { ...(options ?? {}), method: "delete", data }, returnResponse),
     };
 }
 

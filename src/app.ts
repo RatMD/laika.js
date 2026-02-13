@@ -24,10 +24,10 @@ import {
     Fragment,
 } from "vue";
 import { ProgressBar } from "./components/progress-bar";
-import { createOctober, provideOctober } from "./composables/use-october";
-import { getProgressBar } from "./singletons/get-progress-bar";
+import { createOctober, provideOctober } from "./plugins/use-october";
+import { getProgressBar } from "./plugins/get-progress-bar";
 import { getByPath, parseOnlyHeader, setByPath, unwrapModule } from "./utils";
-import { createRouter, provideRouter } from "./composables/use-router";
+import { createRouter, provideRouter } from "./plugins/use-router";
 
 // States
 const component = shallowRef<DefineComponent>();
