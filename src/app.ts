@@ -1,4 +1,5 @@
 import type {
+    ComponentsFacade,
     LaikaAppComponent,
     LaikaPayload,
     LaikaPayloadRefs,
@@ -6,6 +7,7 @@ import type {
     LaikaRuntime,
     LaikaVuePlugin,
     OctoberAPI,
+    OctoberComponentHandle,
     Props,
     ResolvedComponent,
     ResolveResult,
@@ -28,6 +30,7 @@ import { createOctober, provideOctober } from "./plugins/use-october";
 import { getProgressBar } from "./plugins/get-progress-bar";
 import { getByPath, parseOnlyHeader, setByPath, unwrapModule } from "./utils";
 import { createRouter, provideRouter } from "./plugins/use-router";
+import { useComponent } from "./plugins/use-component";
 
 // States
 const component = shallowRef<DefineComponent>();
@@ -145,6 +148,34 @@ export const App: LaikaAppComponent = defineComponent({
 });
 
 /**
+ * Handle Components
+ * @returns 
+ */
+export function createComponentsFacade(): ComponentsFacade {
+    const { components } = usePayload();
+
+    return new Proxy({} as ComponentsFacade, {
+        get(_t, prop) {
+            if (prop === "has") {
+                return (alias: string) => !!components.value && alias in components.value;
+            }
+            if (prop === "get") {
+                return (alias: string): OctoberComponentHandle | null => {
+                if (!components.value || !(alias in components.value)) return null;
+                    return useComponent(alias);
+                };
+            }
+
+        if (typeof prop !== "string") {
+            return undefined;
+        }
+        if (!components.value || !(prop in components.value)) return null;
+            return useComponent(prop);
+        },
+    });
+}
+
+/**
  * Laika Vue Plugin
  */
 export const plugin: LaikaVuePlugin = {
@@ -157,6 +188,7 @@ export const plugin: LaikaVuePlugin = {
         const getRuntime = () => runtime;
         
         // Composable
+        const componentsFacade = createComponentsFacade();
         const progress = getProgressBar();
 
         // install router plugin
@@ -188,7 +220,7 @@ export const plugin: LaikaVuePlugin = {
             get: () => runtime.payload
         });
         Object.defineProperty(app.config.globalProperties, '$components', {
-            get: () => runtime.payload?.components
+            get: () => componentsFacade
         });
         Object.defineProperty(app.config.globalProperties, '$router', {
             get: () => router

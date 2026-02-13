@@ -11,8 +11,8 @@ export interface OctoberComponent<ComponentProps extends Props = Props, Componen
     component: string;
     alias: string;
     class: string;
-    options: ComponentProps;
-    props: ComponentOptions;
+    options: ComponentOptions;
+    props: ComponentProps;
     methods: string[];
     vars: string[];
 }
@@ -20,6 +20,20 @@ export interface OctoberComponent<ComponentProps extends Props = Props, Componen
 export interface OctoberComponents {
     [alias: string]: OctoberComponent<Props, Props>;
 }
+
+export type OctoberComponentExtras = {
+    get<T = any>(key: string, fallback?: T): T;
+    load(keys: string | string[]): Promise<void>;
+    loaded(key: string): boolean;
+    exists(key: string): boolean;
+};
+
+export type OctoberComponentHandle = OctoberComponent<Props, Props> & OctoberComponentExtras;
+
+export type ComponentsFacade = {
+    has(alias: string): boolean;
+    get(alias: string): OctoberComponentHandle | null;
+} & Record<string, OctoberComponentHandle>;
 
 export interface OctoberPayload {
     baseUrl: string;

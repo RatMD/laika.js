@@ -64,7 +64,7 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
             headers,
             body: method !== 'get' ? JSON.stringify(data ?? {}) : null,
             credentials: "same-origin",
-        });;
+        });
     }
 
     /**
