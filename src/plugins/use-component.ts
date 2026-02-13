@@ -77,7 +77,7 @@ export function useComponent(alias: string): OctoberComponentHandle {
      * @param keys 
      * @returns 
      */
-    async function load(keys: string | string[]): Promise<void> {
+    async function load(keys: string | string[]): Promise<any> {
         const list = Array.isArray(keys) ? keys : [keys];
         const missing = list.filter(key => !loaded(key));
         if (!missing.length) {
@@ -90,6 +90,12 @@ export function useComponent(alias: string): OctoberComponentHandle {
             preserveState: true,
             replace: true,
         });
+
+        if (Array.isArray(keys)) {
+            return current.value?.props;
+        } else {
+            return current.value?.props[keys];
+        }
     }
 
     const handle = new Proxy({} as OctoberComponentHandle, {
