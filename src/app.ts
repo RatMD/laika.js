@@ -222,6 +222,9 @@ export const plugin: LaikaVuePlugin = {
         Object.defineProperty(app.config.globalProperties, '$payload', {
             get: () => runtime.payload
         });
+        Object.defineProperty(app.config.globalProperties, '$shared', {
+            get: () => runtime.payload?.shared || {}
+        });
         Object.defineProperty(app.config.globalProperties, '$components', {
             get: () => componentsFacade
         });

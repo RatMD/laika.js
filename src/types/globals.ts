@@ -6,6 +6,7 @@ declare module 'vue' {
     interface ComponentCustomProperties {
         $laika: LaikaRuntime;
         $payload: LaikaPayload | undefined;
+        $shared: LaikaPayload['shared'] | undefined;
         $components: LaikaPayload['components'] | undefined;
         $router: LaikaRouter;
         $october: OctoberAPI;
@@ -16,6 +17,7 @@ declare module "@vue/runtime-core" {
     interface ComponentCustomProperties {
         $laika: LaikaRuntime;
         $payload: LaikaPayload | undefined;
+        $shared: LaikaPayload['shared'] | undefined;
         $components: LaikaPayload['components'] | undefined;
         $router: LaikaRouter;
         $october: OctoberAPI;
