@@ -1,5 +1,5 @@
 import type { LaikaRuntime, LaikaPayload } from "./laika";
-import type { OctoberAPI } from "./october";
+import type { OctoberAPI, OctoberComponentHandle } from "./october";
 import { LaikaRouter } from "./router";
 
 declare module 'vue' {
@@ -7,7 +7,7 @@ declare module 'vue' {
         $laika: LaikaRuntime;
         $payload: LaikaPayload | undefined;
         $shared: LaikaPayload['shared'] | undefined;
-        $components: LaikaPayload['components'] | undefined;
+        $components: Record<string, OctoberComponentHandle> | undefined;
         $router: LaikaRouter;
         $october: OctoberAPI;
     }
@@ -18,7 +18,7 @@ declare module "@vue/runtime-core" {
         $laika: LaikaRuntime;
         $payload: LaikaPayload | undefined;
         $shared: LaikaPayload['shared'] | undefined;
-        $components: LaikaPayload['components'] | undefined;
+        $components: Record<string, OctoberComponentHandle> | undefined;
         $router: LaikaRouter;
         $october: OctoberAPI;
     }
