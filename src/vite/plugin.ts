@@ -8,10 +8,9 @@ export interface LaikaViteConfig {
     i18n: {
         output: string;
         include: RegExp;
-        functions: string[],
+        functions: string[];
         writeOnDev: boolean;
-        extraKeys: string[],
-        extraGlobs: string[],
+        extraKeys: string[];
     },
     stripOctober: boolean;
 }
@@ -28,7 +27,6 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
             include: /(\.vue|\.js|\.jsx|\.ts|\.tsx)$/,
             writeOnDev: true,
             extraKeys: [],
-            extraGlobs: []
         },
         stripOctober: true,
     };
@@ -51,7 +49,7 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
         const outPath = path.resolve(viteConfig.root, config.i18n.output);
         fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
-        const json = JSON.stringify(extractor.toJson(config.i18n.extraKeys, config.i18n.extraGlobs), null, 4) + '\n';
+        const json = JSON.stringify(extractor.toJson(config.i18n.extraKeys), null, 4) + '\n';
         const newHash = md5(json);
         const oldHash = fs.existsSync(outPath) ? md5(fs.readFileSync(outPath, 'utf8')) : null;
 

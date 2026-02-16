@@ -34,7 +34,7 @@ export default class Extractor {
      * @param extraGlobs 
      * @returns 
      */
-    public toJson(extraKeys: string[] = [], extraGlobs: string[] = []) {
+    public toJson(extraKeys: string[] = []) {
         const keys = new Set(this.strings);
         for (const key of extraKeys) {
             if (key?.trim()) {
@@ -43,14 +43,9 @@ export default class Extractor {
         }
 
         const sortedKeys = Array.from(keys).sort();
-        const sortedGlobs = Array.from(
-            new Set(extraGlobs.map(glob => glob.trim()).filter(Boolean))
-        ).sort();
-
         return {
             version: 1,
             keys: sortedKeys,
-            globs: sortedGlobs,
         };
     }
 
