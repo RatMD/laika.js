@@ -28,6 +28,15 @@ export interface SiteObject {
     timezone: string;
 }
 
+export type FlashTypes = 'info' | 'error' | 'success' | 'warning';
+
+export interface FlashObject {
+    info?: string[];
+    error?: string[];
+    success?: string[];
+    warning?: string[];
+}
+
 export interface PageObject<PageProps extends Props = Props> {
     id: string | null;
     url: string | null;
@@ -39,6 +48,7 @@ export interface PageObject<PageProps extends Props = Props> {
     locale: string;
     title: string;
     meta: PageMetaObject;
+    flash: FlashObject;
     content: string | null;
     placeholders: Record<string, unknown>;
 }
