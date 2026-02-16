@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
  * @param source 
  * @returns 
  */
-export function merge<T>(target: T, source: Partial<T>): T {
+export function merge<T, S = Partial<T>>(target: T, source: Partial<S>): T {
     for (const key in source) {
         const sourceValue = source[key];
         const targetValue = (target as any)[key];

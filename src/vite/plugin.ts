@@ -15,9 +15,11 @@ export interface LaikaViteConfig {
     stripOctober: boolean;
 }
 
-export type LaikaVitaUserConfig = Partial<Omit<LaikaViteConfig, 'i18'>> & Partial<LaikaViteConfig['i18n']>
+export type LaikaVitePartialConfig = Omit<Partial<LaikaViteConfig>, 'i18n'> & {
+    i18n?: Partial<LaikaViteConfig['i18n']>;
+};
 
-export default function laikaPlugin(userConfig: LaikaVitaUserConfig = {}): Plugin {
+export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Plugin {
     const defaultConfig: LaikaViteConfig = {
         i18n: {
             output: 'resources/laika.i18n.json',
@@ -29,7 +31,7 @@ export default function laikaPlugin(userConfig: LaikaVitaUserConfig = {}): Plugi
         },
         stripOctober: true,
     };
-    const config = merge<LaikaViteConfig>(defaultConfig, userConfig);
+    const config = merge<LaikaViteConfig, LaikaVitePartialConfig>(defaultConfig, userConfig);
 
     /**
      * Extract Locale Keys
@@ -120,6 +122,7 @@ export default function laikaPlugin(userConfig: LaikaVitaUserConfig = {}): Plugi
          * @returns 
          */
         transform(code, id) {
+            console.log(id, config.i18n.include.test(id));
             if (config.i18n.include.test(id)) {
                 extractLocaleKeys(code, callPattern, collected);
                 console.log(code, [...collected]);
