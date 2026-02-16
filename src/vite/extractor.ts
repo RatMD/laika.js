@@ -113,7 +113,7 @@ export default class Extractor {
         if (!fs.existsSync(filePath)) {
             return;
         }
-        if (include.test(filePath)) {
+        if (!include.test(filePath)) {
             return;
         }
 
