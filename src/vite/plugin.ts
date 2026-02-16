@@ -1,7 +1,8 @@
-import type { Plugin, ResolvedConfig } from 'vite';
+import type { Plugin, ResolvedConfig, ViteDevServer } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { md5, merge } from './utils';
+import Extractor from './extractor';
 
 export interface LaikaViteConfig {
     i18n: {
@@ -33,46 +34,14 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
     };
     const config = merge<LaikaViteConfig, LaikaVitePartialConfig>(defaultConfig, userConfig);
 
-    /**
-     * Extract Locale Keys
-     * @param code 
-     * @param pattern 
-     * @param out 
-     */
-    function extractLocaleKeys(code: string, pattern: RegExp, out: Set<string>) {
-        pattern.lastIndex = 0;
-        let match: RegExpExecArray | null;
-        while ((match = pattern.exec(code))) {
-            const key = match[2]?.trim();
-            if (key) {
-                out.add(key);
-            }
-        }
-    }
-
-    /**
-     * Build Locale Json
-     * @returns 
-     */
-    function buildLocaleFile() {
-        const keys = new Set(collected);
-        for (const key of config.i18n.extraKeys) {
-            if (key?.trim()) {
-                keys.add(key.trim());
-            }
-        }
-
-        const sortedKeys = Array.from(keys).sort();
-        const sortedGlobs = Array.from(
-            new Set(config.i18n.extraGlobs.map(glob => glob.trim()).filter(Boolean))
-        ).sort();
-
-        return {
-            version: 1,
-            keys: sortedKeys,
-            globs: sortedGlobs,
-        };
-    }
+    // States
+    let viteConfig: ResolvedConfig;
+    const funcPattern = config.i18n.functions.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const callPattern = new RegExp(
+        String.raw`(?:^|[^\w$])(?:${funcPattern})\(\s*(['"])([^'"]+?)\1`,
+        'g'
+    );
+    const extractor = new Extractor(callPattern);
     
     /**
      * Write File
@@ -82,7 +51,7 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
         const outPath = path.resolve(viteConfig.root, config.i18n.output);
         fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
-        const json = JSON.stringify(buildLocaleFile(), null, 2) + '\n';
+        const json = JSON.stringify(extractor.toJson(config.i18n.extraKeys, config.i18n.extraGlobs), null, 4) + '\n';
         const newHash = md5(json);
         const oldHash = fs.existsSync(outPath) ? md5(fs.readFileSync(outPath, 'utf8')) : null;
 
@@ -92,15 +61,6 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
 
         fs.writeFileSync(outPath, json, 'utf8');
     }
-
-    // Collect
-    let viteConfig: ResolvedConfig;
-    const collected = new Set<string>();
-    const funcPattern = config.i18n.functions.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    const callPattern = new RegExp(
-        String.raw`(?:^|[^\w$])(?:${funcPattern})\(\s*(['"])([^'"]+?)\1`,
-        'g'
-    );
 
     // Return VITE Plugin
     return {
@@ -122,10 +82,8 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
          * @returns 
          */
         transform(code, id) {
-            console.log(id, config.i18n.include.test(id));
             if (config.i18n.include.test(id)) {
-                extractLocaleKeys(code, callPattern, collected);
-                console.log(code, [...collected]);
+                extractor.extractFromFile(id, code);
             }
 
             if (config.stripOctober && id.endsWith('.vue')) {
@@ -140,21 +98,39 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
         },
 
         /**
-         * Handle HMR
-         * @param ctx 
-         * @returns 
+         * Configure HMR Server
+         * @param server
+         * @returns
          */
-        handleHotUpdate(ctx) {
+        configureServer(server: ViteDevServer) {
             if (!config.i18n.writeOnDev) {
                 return;
             }
-            if (!config.i18n.include.test(ctx.file)) {
-                return;
-            }
 
-            try {
+            // Initial Scan
+            extractor.scanFiles(viteConfig.root, config.i18n.include);
+            writeLocaleFile();
+
+            // Watch file changes
+            const onChange = (file: string) => {
+                if (!config.i18n.include.test(file)) {
+                    return;
+                }
+                extractor.scanFile(file, config.i18n.include);
                 writeLocaleFile();
-            } catch { }
+            };
+            server.watcher.on('add', onChange);
+            server.watcher.on('change', onChange);
+
+            // Watch file deletions
+            const onUnlink = (file: string) => {
+                if (!config.i18n.include.test(file)) {
+                    return;
+                }
+                extractor.unsetFromFile(file);
+                writeLocaleFile();
+            };
+            server.watcher.on('unlink', onUnlink);
         },
 
         /**
