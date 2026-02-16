@@ -161,8 +161,11 @@ export function createComponentsFacade(): ComponentsFacade {
             }
             if (prop === "get") {
                 return (alias: string): OctoberComponentHandle | null => {
-                if (!components.value || !(alias in components.value)) return null;
-                    return useComponent(alias);
+                    if (!components.value || !(alias in components.value)) {
+                        return null;
+                    } else {
+                        return useComponent(alias);
+                    }
                 };
             }
 
