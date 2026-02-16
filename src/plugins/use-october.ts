@@ -156,7 +156,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         if (path.startsWith('http')) {
             return path;
         } else {
-            return app('/x-laika/resolve' + btoa(path));
+            return app('/x-laika/resolve?path=' + btoa(path));
         }
     }
 
