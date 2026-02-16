@@ -55,8 +55,6 @@ export interface OctoberAPI {
     currency(value: string | number, options?: CurrencyOptions): string;
     trans(key: string, replacements?: Record<string, unknown>): string;
     trans_choice(key: string, number: number, replacements?: Record<string, unknown>): string;
-    _: OctoberAPI["trans"];
-    __: OctoberAPI["trans_choice"];
 
     content(markup: string): Promise<string>;
     md(markdown: string): Promise<string>;

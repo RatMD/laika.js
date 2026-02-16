@@ -271,8 +271,6 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         currency,
         trans,
         trans_choice,
-        _: trans,
-        __: trans_choice,
 
         content: (markup) => callFilter("content", { markup }),
         md: (content) => callFilter("md", { content }),
