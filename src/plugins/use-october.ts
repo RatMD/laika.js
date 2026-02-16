@@ -215,28 +215,150 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
     }
 
     /**
-     * |trans TwigFilter (TBI)
+     * 
+     * @internal Used for custom Laravel-alike translation system
+     * @param key 
+     * @returns 
+     */
+    function getLocalizationString(key: string): string|null {
+        const runtime = requireRuntime();
+        const locale = runtime.payload?.site?.locale || '';
+        const fallbackLocale = runtime.payload?.october?.fallbackLocale || '';
+
+        const localeStrings = runtime.payload?.october?.strings?.[locale] || {};
+        const fallbackStrings = runtime.payload?.october?.strings?.[fallbackLocale] || {};
+
+        if (key in localeStrings) {
+            return localeStrings[key] as string;
+        } else if (key in fallbackStrings) {
+            return fallbackStrings[key] as string;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 
+     * @internal Used for custom Laravel-alike translation system
+     * @param string 
+     * @param replacements 
+     * @returns 
+     */
+    function transformLocalizationString(string: string, replacements?: Record<string, unknown>){
+        if (!replacements) {
+            return string;
+        }
+
+        for (const [rawKey, rawVal] of Object.entries(replacements)) {
+            if (rawVal === undefined || rawVal === null) {
+                continue;
+            }
+
+            const key = String(rawKey);
+            const value = String(rawVal);
+
+            // :key
+            string = string.replaceAll(`:${key}`, value);
+
+            // :Key (ucfirst)
+            const uc = key.charAt(0).toUpperCase() + key.slice(1);
+            string = string.replaceAll(`:${uc}`, value.charAt(0).toUpperCase() + value.slice(1));
+
+            // :KEY (upper)
+            string = string.replaceAll(`:${key.toUpperCase()}`, value.toUpperCase());
+        }
+
+        return string;
+    }
+
+    /**
+     * 
+     * @internal Used for custom Laravel-alike translation system
+     * @param raw 
+     * @param n 
+     * @returns 
+     */
+    function choosePluralForm(raw: string, n: number): string {
+        const parts = raw.split('|').map(s => s.trim()).filter(Boolean);
+
+        for (const part of parts) {
+
+            // explizit {0} text
+            const exact = part.match(/^\{(\d+)\}\s*(.*)$/);
+            if (exact) {
+                const num = Number(exact[1]);
+                if (n === num) {
+                    return exact[2] as string;
+                }
+                continue;
+            }
+
+            // [2,*] text and [0,1] text
+            const range = part.match(/^\[(\d+|\-?\*),(\d+|\-?\*)\]\s*(.*)$/);
+            if (range) {
+                const minRaw = range[1];
+                const maxRaw = range[2];
+                const text = range[3];
+
+                const min = minRaw === '*' ? -Infinity : Number(minRaw);
+                const max = maxRaw === '*' ? Infinity : Number(maxRaw);
+
+                if (n >= min && n <= max) {
+                    return text as string;
+                }
+                continue;
+            }
+        }
+
+        // Fallback
+        if (parts.length === 1) {
+            return parts[0] as string;
+        }
+
+        // Simple singular|plural text
+        if (parts.length === 2) {
+            return (n === 1 ? parts[0] : parts[1]) as string;
+        }
+
+        // Latest part as "other"
+        return parts[parts.length - 1] as string;
+    }
+
+    /**
+     * |trans TwigFilter
      * @param key 
      * @param replacements 
      * @returns 
      */
     function trans(key: string, replacements?: Record<string, unknown>) {
-        return key;
+        let localeString = getLocalizationString(key);
+        if (localeString === null) {
+            return key;
+        }
+
+        return transformLocalizationString(localeString, replacements);
     }
 
     /**
-     * |trans_choice TwigFilter (TBI)
+     * |trans_choice TwigFilter
      * @param key 
      * @param number 
      * @param replacements 
      * @returns 
      */
     function trans_choice(key: string, number: number, replacements?: Record<string, unknown>) {
-        return key;
+        let localeString = getLocalizationString(key);
+        if (localeString === null) {
+            return key;
+        }
+
+        const chosen = choosePluralForm(localeString, number);
+        return transformLocalizationString(chosen, { count: number, ...replacements });
     }
 
     /**
      * 
+     * @internal Used for lazy-loading content
      * @param filter 
      * @param payload 
      * @returns 

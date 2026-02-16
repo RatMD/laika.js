@@ -18,6 +18,16 @@ export interface PageMetaObject extends Props {
     meta_description: string | null;
 }
 
+export interface SiteObject {
+    name: string;
+    code: string;
+    url: string;
+    prefix: string;
+    theme: string;
+    locale: string;
+    timezone: string;
+}
+
 export interface PageObject<PageProps extends Props = Props> {
     id: string | null;
     url: string | null;
@@ -26,6 +36,7 @@ export interface PageObject<PageProps extends Props = Props> {
     props: PageProps;
     layout: string;
     theme: string | number;
+    locale: string;
     title: string;
     meta: PageMetaObject;
     content: string | null;
@@ -34,6 +45,7 @@ export interface PageObject<PageProps extends Props = Props> {
 export interface LaikaPayload<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props> {
     version: string | null;
     token: string | null;
+    site: SiteObject;
     theme: ThemeObject<ThemeOptions>;
     page: PageObject<PageProps>;
     components: OctoberComponents;

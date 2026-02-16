@@ -35,6 +35,10 @@ export type ComponentsFacade = {
     get(alias: string): OctoberComponentHandle | null;
 } & Record<string, OctoberComponentHandle>;
 
+export interface OctoberLocaleSet {
+    [locale: string]: Record<string, string>;
+}
+
 export interface OctoberPayload {
     baseUrl: string;
     themeBaseUrl: string;
@@ -44,6 +48,8 @@ export interface OctoberPayload {
     currentParams: Record<string, string>;
     resizer: { mode: 'route' | 'controller'; basePath: string; };
     linkTypes?: Record<string, any>;
+    fallbackLocale: string;
+    strings: OctoberLocaleSet;
 }
 
 export interface OctoberAPI {
