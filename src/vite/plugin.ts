@@ -65,8 +65,8 @@ export default function laikaPlugin(userConfig: Partial<LaikaViteConfig>): Plugi
 
         return {
             version: 1,
-            keys: [...sortedKeys],
-            globs: [...sortedGlobs],
+            keys: [sortedKeys],
+            globs: [sortedGlobs],
         };
     }
     
