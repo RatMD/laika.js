@@ -15,12 +15,14 @@ export interface LaikaViteConfig {
     stripOctober: boolean;
 }
 
-export default function laikaPlugin(userConfig: Partial<LaikaViteConfig>): Plugin {
+export type LaikaVitaUserConfig = Partial<Omit<LaikaViteConfig, 'i18'>> & Partial<LaikaViteConfig['i18n']>
+
+export default function laikaPlugin(userConfig: LaikaVitaUserConfig = {}): Plugin {
     const defaultConfig: LaikaViteConfig = {
         i18n: {
             output: 'resources/laika.i18n.json',
             functions: ['trans', 'trans_choice'],
-            include: /\.vue|\.js|\.jsx|\.ts|\.tsx/,
+            include: /(\.vue|\.js|\.jsx|\.ts|\.tsx)$/,
             writeOnDev: true,
             extraKeys: [],
             extraGlobs: []
@@ -65,8 +67,8 @@ export default function laikaPlugin(userConfig: Partial<LaikaViteConfig>): Plugi
 
         return {
             version: 1,
-            keys: [sortedKeys],
-            globs: [sortedGlobs],
+            keys: sortedKeys,
+            globs: sortedGlobs,
         };
     }
     
@@ -120,6 +122,7 @@ export default function laikaPlugin(userConfig: Partial<LaikaViteConfig>): Plugi
         transform(code, id) {
             if (config.i18n.include.test(id)) {
                 extractLocaleKeys(code, callPattern, collected);
+                console.log(code, [...collected]);
             }
 
             if (config.stripOctober && id.endsWith('.vue')) {
