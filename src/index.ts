@@ -1,7 +1,9 @@
 import './types/globals';
 
 export type * from './types';
+export { Flash } from './components/flash';
 export { Head } from './components/head';
+export { Link } from './components/link';
 export { PageComponent } from './components/page-component';
 export { PageContent } from './components/page-content';
 export { ProgressBar } from './components/progress-bar';
