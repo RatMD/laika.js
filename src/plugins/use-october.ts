@@ -148,6 +148,19 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
     }
 
     /**
+     * |link TwigFilter
+     * @param path 
+     * @returns 
+     */
+    function link(path: string) {
+        if (path.startsWith('http')) {
+            return path;
+        } else {
+            return app('/x-laika/resolve' + btoa(path));
+        }
+    }
+
+    /**
      * 
      * @param file 
      * @returns 
@@ -413,6 +426,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         app,
         theme,
         page,
+        link,
         media,
         resize,
         currency,

@@ -56,6 +56,7 @@ export interface OctoberAPI {
     app(path: string): string;
     theme<T = string | string[]>(path: T): T;
     page(name?: string | null, params?: Record<string, any> | boolean, persistence?: boolean): string | undefined;
+    link(path: string): string;
     media(file: string): string;
     resize(input: string, width?: number | null, height?: number | null, options?: Record<string, any>): string;
     currency(value: string | number, options?: CurrencyOptions): string;
