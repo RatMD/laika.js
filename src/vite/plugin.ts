@@ -23,7 +23,7 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
     const defaultConfig: LaikaViteConfig = {
         i18n: {
             output: 'resources/laika.i18n.json',
-            functions: ['trans', 'trans_choice'],
+            functions: ['trans', 'transChoice', 'trans_choice'],
             include: /(\.vue|\.js|\.jsx|\.ts|\.tsx)$/,
             writeOnDev: true,
             extraKeys: [],

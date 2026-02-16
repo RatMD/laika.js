@@ -40,6 +40,7 @@ export interface PageObject<PageProps extends Props = Props> {
     title: string;
     meta: PageMetaObject;
     content: string | null;
+    placeholders: Record<string, unknown>;
 }
 
 export interface LaikaPayload<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props> {

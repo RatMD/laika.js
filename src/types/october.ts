@@ -60,12 +60,19 @@ export interface OctoberAPI {
     resize(input: string, width?: number | null, height?: number | null, options?: Record<string, any>): string;
     currency(value: string | number, options?: CurrencyOptions): string;
     trans(key: string, replacements?: Record<string, unknown>): string;
-    trans_choice(key: string, number: number, replacements?: Record<string, unknown>): string;
+    transChoice(key: string, number: number, replacements?: Record<string, unknown>): string;
+    placeholder(name: string, defaultValue?: string): any;
+    hasPlaceholder(name: string): boolean;
 
     content(markup: string): Promise<string>;
     md(markdown: string): Promise<string>;
+    mdSafe(markdown: string): Promise<string>;
+    mdClean(markdown: string): Promise<string>;
+    mdIndent(markdown: string): Promise<string>;
+
+    // PHP equivalent naming-conventions
+    trans_choice(key: string, number: number, replacements?: Record<string, unknown>): string;
     md_safe(markdown: string): Promise<string>;
     md_clean(markdown: string): Promise<string>;
     md_indent(markdown: string): Promise<string>;
-    placeholder(key: string, fallback?: string): Promise<string | null>;
 }

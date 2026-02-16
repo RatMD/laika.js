@@ -346,7 +346,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
      * @param replacements 
      * @returns 
      */
-    function trans_choice(key: string, number: number, replacements?: Record<string, unknown>) {
+    function transChoice(key: string, number: number, replacements?: Record<string, unknown>) {
         let localeString = getLocalizationString(key);
         if (localeString === null) {
             return key;
@@ -354,6 +354,31 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
 
         const chosen = choosePluralForm(localeString, number);
         return transformLocalizationString(chosen, { count: number, ...replacements });
+    }
+
+    /**
+     * 
+     * @param name 
+     * @param defaultValue 
+     * @returns 
+     */
+    function placeholder(name: string, defaultValue: any = null): unknown {
+        const runtime = requireRuntime();
+        if (name in (runtime.payload?.page?.placeholders || {})) {
+            return (runtime.payload?.page?.placeholders || {})['name'];
+        } else {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * 
+     * @param name 
+     * @returns 
+     */
+    function hasPlaceholder(name: string): boolean {
+        const runtime = requireRuntime();
+        return name in (runtime.payload?.page?.placeholders || {});
     }
 
     /**
@@ -392,14 +417,20 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         resize,
         currency,
         trans,
-        trans_choice,
-
+        transChoice,
+        placeholder,
+        hasPlaceholder,
         content: (markup) => callFilter("content", { markup }),
         md: (content) => callFilter("md", { content }),
+        mdSafe: (content) => callFilter("md_safe", { content }),
+        mdClean: (content) => callFilter("md_clean", { content }),
+        mdIndent: (content) => callFilter("md_indent", { content }),
+
+        // PHP equivalent naming-conventions
+        trans_choice: transChoice,
         md_safe: (content) => callFilter("md_safe", { content }),
         md_clean: (content) => callFilter("md_clean", { content }),
         md_indent: (content) => callFilter("md_indent", { content }),
-        placeholder: (key, fallback) => callFilter("placeholder", { key, fallback }),
     };
 }
 
