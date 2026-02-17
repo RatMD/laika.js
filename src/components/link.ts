@@ -117,7 +117,7 @@ export const Link = defineComponent({
             if (props.target === "_blank") {
                 return true;
             } else {
-                return isExternalUrl(resolvedUrl.value);
+                return isExternalUrl(resolvedUrl.value) && resolvedUrl.value.indexOf(`//${window.location.hostname}/`) < 0;
             }
         });
 

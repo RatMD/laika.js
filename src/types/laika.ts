@@ -12,12 +12,6 @@ export interface ThemeObject<ThemeOptions extends Props = Props> {
     options: ThemeOptions;
 }
 
-export interface PageMetaObject extends Props {
-    title: string | null;
-    meta_title: string | null;
-    meta_description: string | null;
-}
-
 export interface SiteObject {
     name: string;
     code: string;
@@ -47,7 +41,7 @@ export interface PageObject<PageProps extends Props = Props> {
     theme: string | number;
     locale: string;
     title: string;
-    meta: PageMetaObject;
+    head: string[];
     flash: FlashObject;
     content: string | null;
     placeholders: Record<string, unknown>;
