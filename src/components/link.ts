@@ -130,9 +130,6 @@ export const Link = defineComponent({
             if (isExternal.value) {
                 return;
             }
-            if (ev.defaultPrevented) {
-                return;
-            }
             if (ev.button !== 0) {
                 return;
             }
