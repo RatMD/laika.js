@@ -5,22 +5,28 @@ import { LaikaRouter } from "./router";
 declare module 'vue' {
     interface ComponentCustomProperties {
         $laika: LaikaRuntime;
-        $payload: LaikaPayload | undefined;
-        $shared: LaikaPayload['shared'] | undefined;
-        $components: Record<string, OctoberComponentHandle> | undefined;
         $router: LaikaRouter;
+        $payload: LaikaPayload | undefined;
+        $site: LaikaPayload['site'] | undefined;
+        $theme: LaikaPayload['theme'] | undefined;
+        $page: LaikaPayload['page'] | undefined;
+        $components: Record<string, OctoberComponentHandle> | undefined;
         $october: OctoberAPI;
+        $shared: LaikaPayload['shared'] | undefined;
     }
 }
 
 declare module "@vue/runtime-core" {
     interface ComponentCustomProperties {
         $laika: LaikaRuntime;
-        $payload: LaikaPayload | undefined;
-        $shared: LaikaPayload['shared'] | undefined;
-        $components: Record<string, OctoberComponentHandle> | undefined;
         $router: LaikaRouter;
+        $payload: LaikaPayload | undefined;
+        $site: LaikaPayload['site'] | undefined;
+        $theme: LaikaPayload['theme'] | undefined;
+        $page: LaikaPayload['page'] | undefined;
+        $components: Record<string, OctoberComponentHandle> | undefined;
         $october: OctoberAPI;
+        $shared: LaikaPayload['shared'] | undefined;
     }
 }
 

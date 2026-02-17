@@ -13,6 +13,7 @@ import type {
     ResolveResult,
 } from "./types";
 import {
+    type ComputedRef,
     type DefineComponent,
     type PropType,
     type VNode,
@@ -219,20 +220,29 @@ export const plugin: LaikaVuePlugin = {
         Object.defineProperty(app.config.globalProperties, '$laika', {
             get: () => runtime
         });
+        Object.defineProperty(app.config.globalProperties, '$router', {
+            get: () => router
+        });
         Object.defineProperty(app.config.globalProperties, '$payload', {
             get: () => runtime.payload
         });
-        Object.defineProperty(app.config.globalProperties, '$shared', {
-            get: () => runtime.payload?.shared || {}
+        Object.defineProperty(app.config.globalProperties, '$site', {
+            get: () => runtime.payload?.site || {}
+        });
+        Object.defineProperty(app.config.globalProperties, '$theme', {
+            get: () => runtime.payload?.theme || {}
+        });
+        Object.defineProperty(app.config.globalProperties, '$page', {
+            get: () => runtime.payload?.page || {}
         });
         Object.defineProperty(app.config.globalProperties, '$components', {
             get: () => componentsFacade
         });
-        Object.defineProperty(app.config.globalProperties, '$router', {
-            get: () => router
-        });
         Object.defineProperty(app.config.globalProperties, '$october', {
             get: () => october
+        });
+        Object.defineProperty(app.config.globalProperties, '$shared', {
+            get: () => runtime.payload?.shared || {}
         });
     },
 
@@ -363,4 +373,28 @@ export function usePayload<PageProps extends Props = Props, SharedProps extends 
         october: computed(() => payload.value?.october),
         shared: computed(() => payload.value?.shared),
     } as LaikaPayloadRefs<PageProps, SharedProps, ThemeOptions>;
+}
+
+/**
+ * Provide Composable Support
+ * @returns 
+ */
+export function usePage<PageProps extends Props = Props>() {
+    return computed(() => payload.value?.page) as ComputedRef<LaikaPayload<PageProps, Props, Props>['page']|undefined>;
+}
+
+/**
+ * Provide Composable Support
+ * @returns 
+ */
+export function useShared<SharedProps extends Props = Props>() {
+    return computed(() => payload.value?.shared) as ComputedRef<LaikaPayload<Props, SharedProps, Props>['shared']|undefined>;
+}
+
+/**
+ * Provide Composable Support
+ * @returns 
+ */
+export function useTheme<ThemeOptions extends Props = Props>() {
+    return computed(() => payload.value?.theme) as ComputedRef<LaikaPayload<Props, Props, ThemeOptions>['theme']|undefined>;
 }

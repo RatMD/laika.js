@@ -11,5 +11,5 @@ export { useComponent } from './plugins/use-component';
 export { useOctober } from './plugins/use-october';
 export { useRouter } from './plugins/use-router';
 export { getProgressBar } from './plugins/get-progress-bar';
-export { useLaika, usePayload, plugin as laikaPlugin } from './app';
+export { useLaika, usePayload, usePage, useShared, useTheme, plugin as laikaPlugin } from './app';
 export { createLaikaApp } from './laika';
