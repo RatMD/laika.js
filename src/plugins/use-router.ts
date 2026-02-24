@@ -99,6 +99,7 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
 
             // Handle History
             if (request.method === 'get') {
+                console.log({ ...options }, url);
                 if (options.replace) {
                     history.replaceState({}, "", url);
                 } else {
