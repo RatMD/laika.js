@@ -1,5 +1,5 @@
 import type { CurrencyOptions, LaikaRouter, LaikaRuntime, OctoberAPI, OctoberPayload, Props } from "../types";
-import { inject } from "vue";
+import { inject, reactive } from "vue";
 import { LAIKA_OCTOBER_KEY } from "../symbols";
 
 /**
@@ -47,6 +47,7 @@ function encodeQuery(params: Record<string, any>) {
 function fillPattern(pattern: string, params: Record<string, any>) {
     return pattern.replace(/:([A-Za-z0-9_]+)/g, (_, key) => {
         const val = params[key];
+        delete params[key];
         return val == null ? "" : encodeURIComponent(String(val));
     });
 }
@@ -58,6 +59,8 @@ function fillPattern(pattern: string, params: Record<string, any>) {
  * @returns 
  */
 export function createOctober(getRuntime: () => LaikaRuntime | undefined, router: LaikaRouter): OctoberAPI {
+    const placeholders = reactive({});
+
     /**
      * 
      * @returns 
@@ -379,7 +382,9 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
     function placeholder(name: string, defaultValue: any = null): unknown {
         const runtime = requireRuntime();
         if (name in (runtime.payload?.page?.placeholders || {})) {
-            return (runtime.payload?.page?.placeholders || {})['name'];
+            return (runtime.payload?.page?.placeholders || {})[name];
+        } else if (name in placeholders) {
+            return placeholders[name];
         } else {
             return defaultValue;
         }
@@ -392,7 +397,17 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
      */
     function hasPlaceholder(name: string): boolean {
         const runtime = requireRuntime();
-        return name in (runtime.payload?.page?.placeholders || {});
+        return name in (runtime.payload?.page?.placeholders || {}) || name in placeholders;
+    }
+
+    /**
+     * 
+     * @param name 
+     * @param value 
+     * @returns 
+     */
+    function setPlaceholder(name: string, value: any): undefined {
+        placeholders[name] = value;
     }
 
     /**
@@ -435,6 +450,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         transChoice,
         placeholder,
         hasPlaceholder,
+        setPlaceholder,
         content: (markup) => callFilter("content", { markup }),
         md: (content) => callFilter("md", { content }),
         mdSafe: (content) => callFilter("md_safe", { content }),

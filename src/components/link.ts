@@ -18,6 +18,16 @@ export interface LinkProps {
     page?: string;
 
     /**
+     * Additional OctoberCMS page parameters.
+     */
+    params?: any;
+
+    /**
+     * Persistence
+     */
+    persistence?: boolean;
+
+    /**
      * The relative path or absolute URL.
      */
     link?: string;
@@ -60,6 +70,16 @@ export const Link = defineComponent({
             type: String as PropType<string>, 
             required: false 
         },
+        params: { 
+            type: Object as PropType<object>, 
+            default: {},
+            required: false 
+        },
+        persistence: { 
+            type: Boolean as PropType<boolean>,
+            default: true, 
+            required: false 
+        },
         link: { 
             type: String as PropType<string>, 
             required: false 
@@ -90,7 +110,7 @@ export const Link = defineComponent({
         // States
         const resolvedUrl = computed(() => {
             if (props.page && props.page.trim().length) {
-                return october.page(props.page.trim());
+                return october.page(props.page.trim(), props.params, props.persistence);
             }
 
             const raw = (props.link ?? "").trim();

@@ -64,6 +64,7 @@ export interface OctoberAPI {
     transChoice(key: string, number: number, replacements?: Record<string, unknown>): string;
     placeholder(name: string, defaultValue?: string): any;
     hasPlaceholder(name: string): boolean;
+    setPlaceholder(name: string, value: any): undefined;
 
     content(markup: string): Promise<string>;
     md(markdown: string): Promise<string>;

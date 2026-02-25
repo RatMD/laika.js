@@ -105,6 +105,11 @@ export const App: LaikaAppComponent = defineComponent({
         runtime.title = titleCallback ?? runtime.title;
         runtime.resolver = resolveComponent;
 
+        // Set Title
+        if ('page' in initialPayload && 'title' in initialPayload.page) {
+            document.title = (runtime.title ?? ((x) => x))(initialPayload.page.title) || '';
+        }
+
         // Popstate
         window.addEventListener("popstate", () => window.location.reload());
 
