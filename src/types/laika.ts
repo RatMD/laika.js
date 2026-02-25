@@ -38,10 +38,10 @@ export interface PageObject<PageProps extends Props = Props> {
     component: string;
     props: PageProps;
     layout: string;
-    theme: string | number;
+    theme: string;
     locale: string;
     title: string;
-    head: string[];
+    head: { [id: string]: string };
     flash: FlashObject;
     content: string | null;
     placeholders: Record<string, unknown>;

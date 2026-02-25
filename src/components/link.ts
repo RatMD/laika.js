@@ -33,15 +33,6 @@ export interface LinkSlots {
 }
 
 /**
- * Validate external urls
- * @param url 
- * @returns 
- */
-function isExternalUrl(url: string): boolean {
-    return /^(https?:)?\/\//i.test(url) || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
-}
-
-/**
  * Normalize relative path
  * @param path 
  * @returns 
@@ -107,17 +98,13 @@ export const Link = defineComponent({
                 return "#";
             }
 
-            if (isExternalUrl(raw)) {
-                return raw;
-            } else {
-                return october.app(normalizeRelative(raw));
-            }
+            return raw.startsWith('http') ? raw : october.app(normalizeRelative(raw));
         });
         const isExternal = computed(() => {
             if (props.target === "_blank") {
                 return true;
             } else {
-                return isExternalUrl(resolvedUrl.value) && resolvedUrl.value.indexOf(`//${window.location.hostname}/`) < 0;
+                return resolvedUrl.value.indexOf(`//${window.location.hostname}/`) < 0;
             }
         });
 
@@ -136,7 +123,7 @@ export const Link = defineComponent({
             if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) {
                 return;
             }
-
+            
             router.visit(resolvedUrl.value);
         }
 
@@ -153,7 +140,7 @@ export const Link = defineComponent({
                     onVisit(event);
                 };
             }
-
+            
             const children = slots.default ? slots.default(customProps, attrs) : undefined;
             return h("a", customProps, children || void 0);
         };

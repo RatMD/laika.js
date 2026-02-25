@@ -29,7 +29,7 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
      */
     function prepare(url: string, options: any = {}): Request {
         const runtime = requireRuntime();
-        const method = (options.method ?? "get").toLowerCase();
+        const method = (options.method ?? "GET").toUpperCase();
         const data = options.data ?? undefined;
 
         // Build Request
@@ -55,14 +55,14 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
         if (options.only?.length) {
             headers.set("X-Laika-Only", options.only.join(","));
         }
-        if (method !== "get") {
+        if (method !== "GET") {
             headers.set('Content-Type', 'application/json');
         }
 
         return new Request(url, {
             method: method.toUpperCase(),
             headers,
-            body: method !== 'get' ? JSON.stringify(data ?? {}) : null,
+            body: method !== 'GET' ? JSON.stringify(data ?? {}) : null,
             credentials: "same-origin",
         });
     }
@@ -98,8 +98,7 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
             response = await fetch(request);
 
             // Handle History
-            if (request.method === 'get') {
-                console.log({ ...options }, url);
+            if (request.method === 'GET') {
                 if (options.replace) {
                     history.replaceState({}, "", url);
                 } else {
@@ -119,11 +118,11 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
     return {
         raw,
         visit,
-        get: (url: string, options?: any) => visit(url, { ...(options ?? {}), method: "get" }),
-        post: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "post", data }),
-        put: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "put", data }),
-        patch: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "patch", data }),
-        delete: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "delete", data }),
+        get: (url: string, options?: any) => visit(url, { ...(options ?? {}), method: "GET" }),
+        post: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "POST", data }),
+        put: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "PUT", data }),
+        patch: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "PATCH", data }),
+        delete: (url: string, data?: any, options?: any) => visit(url, { ...(options ?? {}), method: "DELETE", data }),
     };
 }
 

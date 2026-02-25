@@ -296,17 +296,100 @@ export const plugin: LaikaVuePlugin = {
      * @param only 
      */
     async swap(nextPayload: LaikaPayload, preserveState?: boolean, only?: string[]) {
-        if ('page' in nextPayload && 'component' in nextPayload.page) {
+        if ('page' in nextPayload) {
             const mod = await runtime.resolver(nextPayload.page.component);
             component.value = markRaw(unwrapModule<ResolvedComponent>(mod));
         }
 
+        // Patch Payload
         if (only && only.length && payload.value) {
             payload.value = this.patch(payload.value, nextPayload, only);
         } else {
             payload.value = nextPayload;
         }
 
+        // Set body class
+        if ('page' in nextPayload) {
+            const currTheme = document.body.dataset.theme;
+            const nextTheme = (nextPayload.page.theme || '').trim().toLowerCase();
+            if (currTheme !== nextTheme && nextTheme !== '') {
+                document.body.classList.remove(`theme-${currTheme}`);
+                document.body.classList.add(`theme-${nextTheme}`);
+                document.body.dataset.theme = nextTheme;
+            }
+
+            const currLayout = document.body.dataset.layout;
+            const nextLayout = (nextPayload.page.layout || '').trim().toLowerCase();
+            if (currLayout !== nextLayout && nextLayout !== '') {
+                document.body.classList.remove(`layout-${currLayout}`);
+                document.body.classList.add(`layout-${nextLayout}`);
+                document.body.dataset.theme = nextLayout;
+            }
+
+            const currPage = document.body.dataset.page;
+            const nextPage = (nextPayload.page.id || '').trim().toLowerCase();
+            if (currPage !== nextPage && nextPage !== '') {
+                document.body.classList.remove(`page-${currPage}`);
+                document.body.classList.add(`page-${nextPage}`);
+                document.body.dataset.theme = nextPage;
+            }
+            
+            // Parse new tags
+            const newTags = { ...nextPayload.page.head };
+            const newNodes = new Map<string, Element>();
+
+            const temp = document.createElement("head");
+            for (const [id, html] of Object.entries(newTags)) {
+                temp.innerHTML = html.trim();
+                const el = temp.firstElementChild;
+                if (!el) {
+                    continue;
+                }
+
+                el.setAttribute("data-laika-id", id);
+                temp.removeChild(el);
+
+                newNodes.set(id, el);
+            }
+
+            // Iterate existing <head> Tags
+            const usedIds = new Set<string>();
+            const oldTags = document.head.querySelectorAll<HTMLElement>('[data-laika-id]');
+            for (const el of Array.from(oldTags)) {
+                const id = el.getAttribute("data-laika-id");
+                if (!id) {
+                    continue;
+                }
+
+                const newEl = newNodes.get(id);
+                if (!newEl) {
+                    el.remove();
+                    continue;
+                }
+
+                usedIds.add(id);
+                if (el.outerHTML === newEl.outerHTML) {
+                    continue;
+                }
+
+                document.head.replaceChild(newEl, el);
+            }
+
+            // Append new tags
+            const childs = document.head.querySelectorAll<HTMLElement>('[data-laika-id]');
+            const last = childs.length > 0 ? childs[childs.length-1]?.nextElementSibling : null;
+            for (const [id, el] of newNodes) {
+                if (!usedIds.has(id)) {
+                    if (last) {
+                        document.head.insertBefore(el, last);
+                    } else {
+                        document.head.appendChild(el);
+                    }
+                }
+            }
+        }
+
+        // Set Document Title
         if ('page' in nextPayload && 'title' in nextPayload.page) {
             const title = payload.value?.page?.title;
             if (title) {
