@@ -1,5 +1,7 @@
 import type {
     CurrencyOptions,
+    FlashObject,
+    FlashTypes,
     LaikaPayload,
     LaikaRouter,
     LaikaRuntime,
@@ -12,6 +14,71 @@ import type {
 import { inject, reactive } from "vue";
 import { LAIKA_OCTOBER_KEY } from "../symbols";
 import { installLarajaxBridge } from "../larajax";
+
+const FLASH_TYPES = new Set<FlashTypes>(["info", "error", "success", "warning"]);
+
+/**
+ * Normalize an October AJAX severity to a supported flash message type.
+ * @param severity
+ * @returns
+ */
+function normalizeFlashType(severity: unknown): FlashTypes {
+    return typeof severity === "string" && FLASH_TYPES.has(severity as FlashTypes)
+        ? severity as FlashTypes
+        : "info";
+}
+
+/**
+ * Add a message without discarding another message of the same type.
+ * @param flash
+ * @param type
+ * @param message
+ */
+function appendFlashMessage(flash: FlashObject, type: FlashTypes, message: unknown): void {
+    if (typeof message !== "string" || !message.trim()) {
+        return;
+    }
+
+    const current = flash[type];
+    const messages = Array.isArray(current) ? current : current ? [current] : [];
+    const nextMessage = message.trim();
+
+    if (!messages.includes(nextMessage)) {
+        flash[type] = [...messages, nextMessage];
+    }
+}
+
+/**
+ * Convert October AJAX response feedback to LAIKA flash messages.
+ * @param ajax
+ * @returns
+ */
+function collectAjaxFlash(ajax: Record<string, any>): FlashObject {
+    const flash: FlashObject = {};
+
+    for (const operation of (ajax.ops ?? []) as Array<Record<string, any>>) {
+        if (operation.op === "flash") {
+            appendFlashMessage(
+                flash,
+                normalizeFlashType(operation.level ?? operation.severity),
+                operation.text ?? operation.message,
+            );
+        }
+    }
+
+    const invalidMessages = Object.values(ajax.invalid ?? {})
+        .flatMap((messages) => Array.isArray(messages) ? messages : [messages]);
+
+    for (const message of invalidMessages) {
+        appendFlashMessage(flash, "error", message);
+    }
+
+    if (Object.keys(flash).length === 0 && typeof ajax.message === "string") {
+        appendFlashMessage(flash, normalizeFlashType(ajax.severity), ajax.message);
+    }
+
+    return flash;
+}
 
 /**
  * 
@@ -483,6 +550,16 @@ export function createOctober(
 
         delete json.__ajax;
         delete json.__laika;
+
+        if (nextPayload && options.flash !== false) {
+            const ajaxFlash = collectAjaxFlash(ajax);
+            if (Object.keys(ajaxFlash).length > 0 && nextPayload.page) {
+                nextPayload.page.flash = {
+                    ...(nextPayload.page.flash ?? {}),
+                    ...ajaxFlash,
+                };
+            }
+        }
 
         if (nextPayload) {
             await applyPayload(nextPayload, only);

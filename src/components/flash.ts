@@ -14,7 +14,7 @@ export interface FlashSlots {
      * 
      * @param props 
      */
-    default(props: { type: FlashTypes, message: string | string[] }): VNodeChild;
+    default(props: { type: FlashTypes, message: string }): VNodeChild;
 }
 
 export const Flash: DefineComponent<
@@ -41,7 +41,7 @@ export const Flash: DefineComponent<
      * Component Slots
      */
     slots: Object as SlotsType<{
-        default: (props: { type: FlashTypes, message: string | string[] }) => VNodeChild,
+        default: (props: { type: FlashTypes, message: string }) => VNodeChild,
     }>,
 
     /**
@@ -64,11 +64,15 @@ export const Flash: DefineComponent<
             }
 
             const children: VNodeChild[] = [];
-            for (const [type, message] of Object.entries(flash)) {
+            for (const [type, value] of Object.entries(flash)) {
                 if (props.type != null && props.type !== type) {
                     continue;
                 }
-                children.push(slots.default({ type: type as FlashTypes, message }));
+
+                const messages = Array.isArray(value) ? value : [value];
+                for (const message of messages) {
+                    children.push(slots.default({ type: type as FlashTypes, message }));
+                }
             }
 
             return children.length > 0 ? h('div', { }, children) : null;

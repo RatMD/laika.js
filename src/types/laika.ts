@@ -25,10 +25,10 @@ export interface SiteObject {
 export type FlashTypes = 'info' | 'error' | 'success' | 'warning';
 
 export interface FlashObject {
-    info?: string[];
-    error?: string[];
-    success?: string[];
-    warning?: string[];
+    info?: string | string[];
+    error?: string | string[];
+    success?: string | string[];
+    warning?: string | string[];
 }
 
 export interface PageObject<PageProps extends Props = Props> {
