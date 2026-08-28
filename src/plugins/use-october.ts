@@ -158,8 +158,12 @@ export function createOctober(
         // Use current page
         if (!name) {
             const url = requireRuntime().payload?.page?.url ?? "/";
-            const merged = persistence ? { ...currentParams, ...params } : params;
-            return url + encodeQuery(merged);
+            const query = encodeQuery(params);
+            if (!query) {
+                return url;
+            }
+
+            return url + (url.includes("?") ? `&${query.slice(1)}` : query);
         }
 
         if (typeof name !== "string")  {
@@ -172,9 +176,15 @@ export function createOctober(
             return void 0;
         }
 
-        const merged = persistence ? { ...currentParams, ...params } : params;
-        const path = fillPattern(pageInfo.pattern, merged);
-        return app(path) + encodeQuery(merged);
+        const routeParams = persistence ? { ...currentParams, ...params } : { ...params };
+        const queryParams = { ...params };
+        const path = fillPattern(pageInfo.pattern, routeParams);
+
+        // Explicit parameters that do not belong to the target pattern are
+        // query parameters. Persisted parameters only fill route placeholders.
+        fillPattern(pageInfo.pattern, queryParams);
+
+        return app(path) + encodeQuery(queryParams);
     }
 
     /**

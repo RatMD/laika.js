@@ -65,7 +65,7 @@ export const Flash: DefineComponent<
 
             const children: VNodeChild[] = [];
             for (const [type, message] of Object.entries(flash)) {
-                if (props?.type !== null && props?.type !== type) {
+                if (props.type != null && props.type !== type) {
                     continue;
                 }
                 children.push(slots.default({ type: type as FlashTypes, message }));
