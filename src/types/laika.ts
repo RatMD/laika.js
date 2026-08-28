@@ -108,6 +108,7 @@ export interface LaikaVuePlugin extends ObjectPlugin {
 export type LaikaPayloadRefs<PageProps extends Props = Props, SharedProps extends Props = Props, ThemeOptions extends Props = Props> = {
     version: ComputedRef<LaikaPayload['version']>;
     token: ComputedRef<LaikaPayload['token']>;
+    site: ComputedRef<LaikaPayload['site']>;
     theme: ComputedRef<LaikaPayload['theme']>;
     page: ComputedRef<LaikaPayload['page']>;
     components: ComputedRef<LaikaPayload['components']>;

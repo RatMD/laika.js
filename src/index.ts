@@ -15,5 +15,5 @@ export { useOctoberFilter } from './plugins/use-october-filter';
 export type { OctoberFilterName } from './plugins/use-october-filter';
 export { useRouter } from './plugins/use-router';
 export { getProgressBar } from './plugins/get-progress-bar';
-export { useLaika, usePayload, usePage, useShared, useTheme, plugin as laikaPlugin } from './app';
+export { useLaika, usePayload, useSite, usePage, useShared, useTheme, plugin as laikaPlugin } from './app';
 export { createLaikaApp } from './laika';

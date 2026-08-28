@@ -462,12 +462,21 @@ export function usePayload<PageProps extends Props = Props, SharedProps extends 
     return {
         version: computed(() => payload.value?.version),
         token: computed(() => payload.value?.token),
+        site: computed(() => payload.value?.site),
         theme: computed(() => payload.value?.theme),
         page: computed(() => payload.value?.page),
         components: computed(() => payload.value?.components),
         october: computed(() => payload.value?.october),
         shared: computed(() => payload.value?.shared),
     } as LaikaPayloadRefs<PageProps, SharedProps, ThemeOptions>;
+}
+
+/**
+ * Provide Composable Support
+ * @returns 
+ */
+export function useSite() {
+    return computed(() => payload.value?.site) as ComputedRef<LaikaPayload<Props, Props, Props>['site']|undefined>;
 }
 
 /**
