@@ -32,10 +32,10 @@ import { getProgressBar } from "./plugins/get-progress-bar";
 import { getByPath, parseOnlyHeader, setByPath, unwrapModule } from "./utils";
 import { createRouter, provideRouter } from "./plugins/use-router";
 import { useComponent } from "./plugins/use-component";
+import { payload } from "./state";
 
 // States
 const component = shallowRef<DefineComponent>();
-const payload = shallowRef<LaikaPayload>();
 const layout = shallowRef<any>(null);
 const key = ref<number | undefined>(undefined);
 
@@ -218,7 +218,11 @@ export const plugin: LaikaVuePlugin = {
         provideRouter(router, app);
 
         // install october plugin
-        october = createOctober(getRuntime, router as LaikaRouter);
+        october = createOctober(
+            getRuntime,
+            router as LaikaRouter,
+            async (nextPayload, only) => this.swap(nextPayload as LaikaPayload, true, only),
+        );
         provideOctober(october, app);
 
         // Attach global properties
@@ -280,9 +284,12 @@ export const plugin: LaikaVuePlugin = {
             throw new Error("Navigation fallback");
         }
 
-        const only = parseOnlyHeader(response.headers.get("X-Laika-Only"));
+        const only = parseOnlyHeader(
+            request.headers.get("X-Laika-Only") ?? response.headers.get("X-Laika-Only"),
+        );
         const data = (await response.json()) as LaikaPayload;
-        await this.swap(data, false, only);
+        const preserveState = request.headers.get("X-Laika-Preserve-State") === "1";
+        await this.swap(data, preserveState, only);
     },
 
     /**
@@ -301,7 +308,7 @@ export const plugin: LaikaVuePlugin = {
      * @param only 
      */
     async swap(nextPayload: LaikaPayload, preserveState?: boolean, only?: string[]) {
-        if ('page' in nextPayload) {
+        if ('page' in nextPayload && nextPayload.page?.component) {
             const mod = await runtime.resolver(nextPayload.page.component);
             component.value = markRaw(unwrapModule<ResolvedComponent>(mod));
         }
@@ -314,7 +321,7 @@ export const plugin: LaikaVuePlugin = {
         }
 
         // Set body class
-        if ('page' in nextPayload) {
+        if ('page' in nextPayload && nextPayload.page) {
             const currTheme = document.body.dataset.theme;
             const nextTheme = (nextPayload.page.theme || '').trim().toLowerCase();
             if (currTheme !== nextTheme && nextTheme !== '') {
@@ -328,7 +335,7 @@ export const plugin: LaikaVuePlugin = {
             if (currLayout !== nextLayout && nextLayout !== '') {
                 document.body.classList.remove(`layout-${currLayout}`);
                 document.body.classList.add(`layout-${nextLayout}`);
-                document.body.dataset.theme = nextLayout;
+                document.body.dataset.layout = nextLayout;
             }
 
             const currPage = document.body.dataset.page;
@@ -336,11 +343,11 @@ export const plugin: LaikaVuePlugin = {
             if (currPage !== nextPage && nextPage !== '') {
                 document.body.classList.remove(`page-${currPage}`);
                 document.body.classList.add(`page-${nextPage}`);
-                document.body.dataset.theme = nextPage;
+                document.body.dataset.page = nextPage;
             }
             
             // Parse new tags
-            const newTags = { ...nextPayload.page.head };
+            const newTags = { ...(nextPayload.page.head ?? {}) };
             const newNodes = new Map<string, Element>();
 
             const temp = document.createElement("head");
@@ -360,7 +367,7 @@ export const plugin: LaikaVuePlugin = {
             // Iterate existing <head> Tags
             const usedIds = new Set<string>();
             const oldTags = document.head.querySelectorAll<HTMLElement>('[data-laika-id]');
-            for (const el of Array.from(oldTags)) {
+            for (const el of nextPayload.page.head ? Array.from(oldTags) : []) {
                 const id = el.getAttribute("data-laika-id");
                 if (!id) {
                     continue;
@@ -383,7 +390,7 @@ export const plugin: LaikaVuePlugin = {
             // Append new tags
             const childs = document.head.querySelectorAll<HTMLElement>('[data-laika-id]');
             const last = childs.length > 0 ? childs[childs.length-1]?.nextElementSibling : null;
-            for (const [id, el] of newNodes) {
+            for (const [id, el] of nextPayload.page.head ? newNodes : []) {
                 if (!usedIds.has(id)) {
                     if (last) {
                         document.head.insertBefore(el, last);

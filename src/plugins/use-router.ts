@@ -55,6 +55,9 @@ export function createRouter(getRuntime: () => LaikaRuntime | undefined, hooks: 
         if (options.only?.length) {
             headers.set("X-Laika-Only", options.only.join(","));
         }
+        if (options.preserveState) {
+            headers.set("X-Laika-Preserve-State", "1");
+        }
         if (method !== "GET") {
             headers.set('Content-Type', 'application/json');
         }

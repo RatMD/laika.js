@@ -1,6 +1,17 @@
-import type { CurrencyOptions, LaikaRouter, LaikaRuntime, OctoberAPI, OctoberPayload, Props } from "../types";
+import type {
+    CurrencyOptions,
+    LaikaPayload,
+    LaikaRouter,
+    LaikaRuntime,
+    OctoberAPI,
+    OctoberPayload,
+    OctoberRequestOptions,
+    OctoberRequestResult,
+    Props,
+} from "../types";
 import { inject, reactive } from "vue";
 import { LAIKA_OCTOBER_KEY } from "../symbols";
+import { installLarajaxBridge } from "../larajax";
 
 /**
  * 
@@ -65,9 +76,16 @@ function fillPattern(pattern: string, params: Record<string, any>) {
  * October Composable Creator
  * @param getRuntime 
  * @param router 
+ * @param getRuntime 
+ * @param router 
+ * @param applyPayload 
  * @returns 
  */
-export function createOctober(getRuntime: () => LaikaRuntime | undefined, router: LaikaRouter): OctoberAPI {
+export function createOctober(
+    getRuntime: () => LaikaRuntime | undefined,
+    router: LaikaRouter,
+    applyPayload: (payload: Partial<LaikaPayload>, only: string[]) => Promise<void> | void,
+): OctoberAPI {
     const placeholders = reactive({});
 
     /**
@@ -127,7 +145,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
     function page(name: string | null = null, params: any = {}, persistence: boolean = true) {
         const oc = boot();
         const pages = oc.pages ?? {};
-        const currentParams = {};
+        const currentParams = { ...(oc.currentParams ?? {}) };
 
         if (typeof params === "boolean") {
             persistence = params;
@@ -139,7 +157,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
 
         // Use current page
         if (!name) {
-            const url = (requireRuntime() as any).url ?? "/";
+            const url = requireRuntime().payload?.page?.url ?? "/";
             const merged = persistence ? { ...currentParams, ...params } : params;
             return url + encodeQuery(merged);
         }
@@ -420,6 +438,173 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
     }
 
     /**
+     * Execute a native October page or component AJAX handler.
+     * @param handler 
+     * @param options 
+     * @returns 
+     */
+    async function request<T = Record<string, unknown>>(
+        handler: string,
+        options: OctoberRequestOptions = {},
+    ): Promise<OctoberRequestResult<T>> {
+        if (!/^(?:\w+::)?on[A-Z][\w+]*$/.test(handler)) {
+            throw new Error(`October AJAX handler name is invalid: ${handler}`);
+        }
+
+        const only = options.only ?? ["token", "page.props", "page.flash", "components", "shared"];
+        const headers: Record<string, string> = {
+            "X-AJAX-HANDLER": handler,
+            "X-AJAX-FLASH": options.flash === false ? "0" : "1",
+        };
+        if (options.partials?.length) {
+            headers["X-AJAX-PARTIALS"] = options.partials.join("&");
+        }
+
+        const response = await router.raw(window.location.pathname + window.location.search, {
+            method: "post",
+            data: options.data ?? {},
+            headers,
+            only,
+            preserveState: options.preserveState ?? true,
+        });
+        const json = await response.json() as Record<string, any>;
+        const ajax = (json.__ajax ?? {}) as Record<string, any>;
+        const nextPayload = json.__laika as Partial<LaikaPayload> | undefined;
+
+        delete json.__ajax;
+        delete json.__laika;
+
+        if (nextPayload) {
+            await applyPayload(nextPayload, only);
+        }
+
+        const partials: Record<string, string> = {};
+        for (const operation of (ajax.ops ?? []) as Array<Record<string, any>>) {
+            if (operation.op === "partial" && typeof operation.name === "string") {
+                partials[operation.name] = String(operation.html ?? "");
+            } else if (operation.op === "dispatch" && typeof operation.event === "string") {
+                window.dispatchEvent(new CustomEvent(operation.event, { detail: operation.detail }));
+            } else if (operation.op === "redirect" && operation.url) {
+                window.location.assign(String(operation.url));
+            } else if (operation.op === "reload") {
+                window.location.reload();
+            }
+        }
+
+        if (!response.ok && !("ok" in ajax)) {
+            throw new Error(`October AJAX request failed (${response.status}).`);
+        }
+
+        return {
+            ok: ajax.ok ?? response.ok,
+            status: response.status,
+            data: json as T,
+            invalid: ajax.invalid ?? {},
+            message: ajax.message ?? null,
+            severity: ajax.severity ?? "info",
+            partials,
+        };
+    }
+
+    /**
+     * Render a trusted partial in the active October page context.
+     * @param name 
+     * @param parameters 
+     * @returns 
+     */
+    async function renderPartial(name: string, parameters: Record<string, unknown> = {}): Promise<string> {
+        const result = await request<{ html?: string }>("onLaikaRenderPartial", {
+            data: { name, parameters },
+            only: ["token"],
+            preserveState: true,
+        });
+        if (!result.ok) {
+            throw new Error(result.message ?? `Unable to render partial: ${name}`);
+        }
+        return result.data.html ?? "";
+    }
+
+    /**
+     * Render a trusted content block in the active October page context.
+     * @param name 
+     * @param parameters 
+     * @returns 
+     */
+    async function content(name: string, parameters: Record<string, unknown> = {}): Promise<string> {
+        const result = await request<{ html?: string }>("onLaikaRenderContent", {
+            data: { name, parameters },
+            only: ["token"],
+            preserveState: true,
+        });
+        if (!result.ok) {
+            throw new Error(result.message ?? `Unable to render content: ${name}`);
+        }
+        return result.data.html ?? "";
+    }
+
+    /**
+     * Limit visible HTML text while preserving the encountered element tree.
+     * @param html 
+     * @param maxLength 
+     * @param end 
+     * @returns 
+     */
+    function htmlLimit(html: string, maxLength: number = 100, end: string = "..."): string {
+        if (maxLength <= 0) {
+            return end;
+        }
+
+        const source = document.createElement("template");
+        source.innerHTML = html;
+        const output = document.createElement("div");
+        let remaining = maxLength;
+        let truncated = false;
+
+        const cloneNode = (node: Node): Node | null => {
+            if (truncated) {
+                return null;
+            }
+            if (node.nodeType === Node.TEXT_NODE) {
+                const characters = Array.from(node.textContent ?? "");
+                if (characters.length <= remaining) {
+                    remaining -= characters.length;
+                    return document.createTextNode(characters.join(""));
+                }
+
+                truncated = true;
+                return document.createTextNode(characters.slice(0, remaining).join("") + end);
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) {
+                return node.cloneNode(false);
+            }
+
+            const clone = node.cloneNode(false);
+            for (const child of Array.from(node.childNodes)) {
+                const childClone = cloneNode(child);
+                if (childClone) {
+                    clone.appendChild(childClone);
+                }
+                if (truncated) {
+                    break;
+                }
+            }
+            return clone;
+        };
+
+        for (const child of Array.from(source.content.childNodes)) {
+            const clone = cloneNode(child);
+            if (clone) {
+                output.appendChild(clone);
+            }
+            if (truncated) {
+                break;
+            }
+        }
+
+        return output.innerHTML;
+    }
+
+    /**
      * 
      * @internal Used for lazy-loading content
      * @param filter 
@@ -427,7 +612,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
      * @returns 
      */
     async function callFilter(filter: string, payload: any) {
-        const response = await router.raw('/x-laika/filter', {
+        const response = await router.raw(app('/x-laika/filter'), {
             method: 'post',
             data: {
                 filter, 
@@ -446,8 +631,17 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         return data.result.content as string;
     }
 
+    /**
+     * @param name 
+     * @param content 
+     * @returns 
+     */
+    function filter(name: 'md' | 'md_safe' | 'md_clean' | 'md_indent', content: string) {
+        return callFilter(name, { content });
+    }
+
     // Export Octobers TwigFunctions
-    return {
+    const api: OctoberAPI = {
         app,
         theme,
         page,
@@ -460,7 +654,11 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         placeholder,
         hasPlaceholder,
         setPlaceholder,
-        content: (markup) => callFilter("content", { markup }),
+        request,
+        renderPartial,
+        content,
+        filter,
+        htmlLimit,
         md: (content) => callFilter("md", { content }),
         mdSafe: (content) => callFilter("md_safe", { content }),
         mdClean: (content) => callFilter("md_clean", { content }),
@@ -472,6 +670,10 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
         md_clean: (content) => callFilter("md_clean", { content }),
         md_indent: (content) => callFilter("md_indent", { content }),
     };
+
+    installLarajaxBridge(api.request);
+
+    return api;
 }
 
 /**

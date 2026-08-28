@@ -85,7 +85,7 @@ export default function laikaPlugin(userConfig: LaikaVitePartialConfig = {}): Pl
             }
 
             if (config.stripOctober && id.endsWith('.vue')) {
-                const pattern = /<october\b[^>]*>[\s\S]*?<\/october>/gi;
+                const pattern = /<(october|php)\b[^>]*>[\s\S]*?<\/\1>/gi;
                 if (pattern.test(code)) {
                     const stripped = code.replace(pattern, '');
                     return { code: stripped, map: null };

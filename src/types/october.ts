@@ -15,6 +15,7 @@ export interface OctoberComponent<ComponentProps extends Props = Props, Componen
     props: ComponentProps;
     methods: string[];
     vars: string[];
+    html?: string;
 }
 
 export interface OctoberComponents {
@@ -24,8 +25,10 @@ export interface OctoberComponents {
 export type OctoberComponentExtras = {
     get<T = any>(key: string, fallback?: T): T;
     load(keys: string | string[]): Promise<void>;
+    loadHtml(): Promise<string>;
     loaded(key: string): boolean;
     exists(key: string): boolean;
+    request<T = Record<string, unknown>>(handler: string, options?: OctoberRequestOptions): Promise<OctoberRequestResult<T>>;
 };
 
 export type OctoberComponentHandle = OctoberComponent<Props, Props> & OctoberComponentExtras;
@@ -52,6 +55,29 @@ export interface OctoberPayload {
     strings: OctoberLocaleSet;
 }
 
+export interface OctoberRequestOptions {
+    data?: Record<string, unknown>;
+    only?: string[];
+    partials?: string[];
+    flash?: boolean;
+    preserveState?: boolean;
+}
+
+export interface OctoberAjaxOperation {
+    op: string;
+    [key: string]: unknown;
+}
+
+export interface OctoberRequestResult<T = Record<string, unknown>> {
+    ok: boolean;
+    status: number;
+    data: T;
+    invalid: Record<string, string[]>;
+    message: string | null;
+    severity: string;
+    partials: Record<string, string>;
+}
+
 export interface OctoberAPI {
     app(path: string): string;
     theme<T = string | string[]>(path: T): T;
@@ -66,7 +92,12 @@ export interface OctoberAPI {
     hasPlaceholder(name: string): boolean;
     setPlaceholder(name: string, value: any): undefined;
 
-    content(markup: string): Promise<string>;
+    request<T = Record<string, unknown>>(handler: string, options?: OctoberRequestOptions): Promise<OctoberRequestResult<T>>;
+    renderPartial(name: string, parameters?: Record<string, unknown>): Promise<string>;
+    content(name: string, parameters?: Record<string, unknown>): Promise<string>;
+    filter(name: 'md' | 'md_safe' | 'md_clean' | 'md_indent', content: string): Promise<string>;
+    htmlLimit(html: string, maxLength?: number, end?: string): string;
+
     md(markdown: string): Promise<string>;
     mdSafe(markdown: string): Promise<string>;
     mdClean(markdown: string): Promise<string>;

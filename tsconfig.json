@@ -13,7 +13,7 @@
         "exactOptionalPropertyTypes": true,
         "strictNullChecks": true,
         "noUncheckedIndexedAccess": true,
-        "baseUrl": ".",
+        "baseUrl": "./",
         "stripInternal": true
     },
     "include": [

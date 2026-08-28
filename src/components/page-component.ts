@@ -1,6 +1,7 @@
 import type { OctoberComponent } from "../types";
 import { usePayload } from "../app";
-import { defineComponent, h, PropType, SlotsType, VNodeChild, type DefineComponent } from "vue";
+import { useComponent } from "../plugins/use-component";
+import { defineComponent, h, PropType, ref, SlotsType, VNodeChild, watch, type DefineComponent } from "vue";
 
 export interface PageComponentProps {
     /**
@@ -51,6 +52,25 @@ export const PageComponent: DefineComponent<
      */
     setup(props, { slots }) {
         const payload = usePayload();
+        const component = useComponent(props.name);
+        const loadingHtml = ref(false);
+
+        watch(
+            () => payload.components.value?.[props.name],
+            async (componentData) => {
+                if (!componentData || componentData.html !== undefined || loadingHtml.value) {
+                    return;
+                }
+
+                loadingHtml.value = true;
+                try {
+                    await component.loadHtml();
+                } finally {
+                    loadingHtml.value = false;
+                }
+            },
+            { immediate: true },
+        );
 
         // Render
         return () => {
@@ -63,8 +83,12 @@ export const PageComponent: DefineComponent<
                 return null;
             }
 
-            const children = slots.default?.({ ...componentData });
-            return h('div', { }, children ?? void 0);
+            const children = slots.default?.(component);
+            if (children) {
+                return h('div', { }, children);
+            }
+
+            return componentData.html ? h('div', { innerHTML: componentData.html }) : null;
         };
     }
 });

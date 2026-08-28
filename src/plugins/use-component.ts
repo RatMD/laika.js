@@ -1,7 +1,8 @@
 import type { OctoberComponentHandle } from "../types";
 import { computed, nextTick } from "vue";
-import { usePayload } from "../app";
+import { payload } from "../state";
 import { useRouter } from "./use-router";
+import { useOctober } from "./use-october";
 
 const cache = new Map<string, OctoberComponentHandle>();
 
@@ -12,11 +13,11 @@ export function useComponent(alias: string): OctoberComponentHandle {
     }
 
     // Composables
-    const { components } = usePayload();
     const router = useRouter();
+    const october = useOctober();
 
     // States
-    const current = computed(() => components.value?.[alias] ?? null);
+    const current = computed(() => payload.value?.components?.[alias] ?? null);
 
     /**
      * Component Property is loaded (exists within .props)
@@ -99,6 +100,24 @@ export function useComponent(alias: string): OctoberComponentHandle {
         }
     }
 
+    /**
+     * Lazy-load the component's native October-rendered markup.
+     */
+    async function loadHtml(): Promise<string> {
+        if (current.value?.html !== undefined) {
+            return current.value.html;
+        }
+
+        await router.get(window.location.pathname + window.location.search, {
+            only: [`components.${alias}.html`],
+            preserveState: true,
+            replace: true,
+        });
+        await nextTick();
+
+        return current.value?.html ?? "";
+    }
+
     const handle = new Proxy({} as OctoberComponentHandle, {
         get(_t, prop) {
             if (prop === "get") {
@@ -107,18 +126,24 @@ export function useComponent(alias: string): OctoberComponentHandle {
             if (prop === "load") {
                 return load;
             }
+            if (prop === "loadHtml") {
+                return loadHtml;
+            }
             if (prop === "loaded") {
                 return loaded;
             }
             if (prop === "exists") {
                 return exists;
             }
+            if (prop === "request") {
+                return (handler: string, options?: any) => october.request(`${alias}::${handler}`, options);
+            }
 
             const cur: any = current.value;
             return cur ? cur[prop as any] : undefined;
         },
         has(_t, prop) {
-            if (prop === "get" || prop === "load" || prop === "loaded" || prop === "exists") {
+            if (prop === "get" || prop === "load" || prop === "loadHtml" || prop === "loaded" || prop === "exists" || prop === "request") {
                 return true;
             } else {
                 const cur: any = current.value;
