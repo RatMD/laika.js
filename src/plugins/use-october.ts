@@ -45,10 +45,19 @@ function encodeQuery(params: Record<string, any>) {
  * @returns 
  */
 function fillPattern(pattern: string, params: Record<string, any>) {
-    return pattern.replace(/:([A-Za-z0-9_]+)/g, (_, key) => {
+    return pattern.replace(/:([A-Za-z0-9_]+\*?)/g, (_, key) => {
+        const escapeSlash = key.endsWith('*');
+        key = key.endsWith('*') ? key.slice(0, -1) : key;
+
         const val = params[key];
         delete params[key];
-        return val == null ? "" : encodeURIComponent(String(val));
+
+        if (val == null) {
+            return '';
+        }
+
+        const encodedVal = encodeURIComponent(String(val));
+        return escapeSlash ? encodedVal.replace(/%2F/g, '/') : encodedVal;
     });
 }
 
@@ -118,7 +127,7 @@ export function createOctober(getRuntime: () => LaikaRuntime | undefined, router
     function page(name: string | null = null, params: any = {}, persistence: boolean = true) {
         const oc = boot();
         const pages = oc.pages ?? {};
-        const currentParams = oc.currentParams ?? {};
+        const currentParams = {};
 
         if (typeof params === "boolean") {
             persistence = params;
