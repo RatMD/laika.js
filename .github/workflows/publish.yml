@@ -32,7 +32,11 @@ jobs:
       - name: Verify release tag
         run: |
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"
-          test "${GITHUB_REF_NAME}" = "${PACKAGE_VERSION}"
+          EXPECTED_TAG="${PACKAGE_VERSION}"
+          if [ "${GITHUB_REF_NAME}" != "${EXPECTED_TAG}" ]; then
+            echo "::error::Release tag ${GITHUB_REF_NAME} does not match package version ${PACKAGE_VERSION}; expected ${EXPECTED_TAG}."
+            exit 1
+          fi
 
       - name: Publish to npm
         env:
