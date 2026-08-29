@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   publish-npm:
@@ -36,4 +35,6 @@ jobs:
           test "${GITHUB_REF_NAME}" = "v${PACKAGE_VERSION}"
 
       - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish
