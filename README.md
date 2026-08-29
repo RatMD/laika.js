@@ -25,7 +25,7 @@ and Vite integration. It is designed to be used with the
 Install the JavaScript package from npm:
 
 ```sh
-npm install @ratmd/laika
+npm install @rat.md/laika
 ```
 
 Install and configure the companion October CMS plugin separately:
@@ -40,7 +40,7 @@ Add the LAIKA plugin to your Vite configuration:
 
 ```ts
 import vue from '@vitejs/plugin-vue';
-import laika from '@ratmd/laika/vite';
+import laika from '@rat.md/laika/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -60,7 +60,7 @@ Use `createLaikaApp` to resolve page components and mount the Vue application:
 
 ```ts
 import { createApp, h } from 'vue';
-import { createLaikaApp, type ResolveResult } from '@ratmd/laika';
+import { createLaikaApp, type ResolveResult } from '@rat.md/laika';
 
 const pages = import.meta.glob('./pages/**/*.vue', { eager: true });
 
@@ -93,7 +93,7 @@ can be supplied using the `rootId` option.
 
 ## Public API
 
-The main `@ratmd/laika` entry point exports:
+The main `@rat.md/laika` entry point exports:
 
 - `createLaikaApp` for application bootstrapping
 - `useLaika`, `usePayload`, `useSite`, `usePage`, `useShared`, and `useTheme`
@@ -101,7 +101,7 @@ The main `@ratmd/laika` entry point exports:
 - `Head`, `Link`, `Flash`, `ProgressBar`, and other LAIKA Vue components
 - TypeScript declarations for payloads, routing, October components, and application configuration
 
-The `@ratmd/laika/vite` entry point exports the LAIKA Vite plugin.
+The `@rat.md/laika/vite` entry point exports the LAIKA Vite plugin.
 
 ## Demo
 
