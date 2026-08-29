@@ -32,7 +32,7 @@ jobs:
       - name: Verify release tag
         run: |
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"
-          test "${GITHUB_REF_NAME}" = "v${PACKAGE_VERSION}"
+          test "${GITHUB_REF_NAME}" = "${PACKAGE_VERSION}"
 
       - name: Publish to npm
         env:
